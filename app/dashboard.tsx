@@ -31,6 +31,26 @@ function CopyButton({ value, label }: { value: string; label: string }) {
   );
 }
 
+function CopyableUsername({ username }: { username: string }) {
+  const [copied, setCopied] = useState(false);
+
+  return (
+    <button
+      type="button"
+      onClick={async () => {
+        await navigator.clipboard.writeText(username);
+        setCopied(true);
+        window.setTimeout(() => setCopied(false), 1200);
+      }}
+      className="mono block max-w-full truncate text-left font-medium text-[var(--text)] transition hover:text-[var(--accent-strong)]"
+      title="Click to copy username"
+      aria-label={`Copy username ${username}`}
+    >
+      {copied ? "Copied!" : username}
+    </button>
+  );
+}
+
 function CredentialRow({
   label,
   value,
@@ -229,9 +249,7 @@ export function Dashboard({ initialUsers }: Props) {
                 className="flex flex-wrap items-center justify-between gap-3 py-4 first:pt-1 last:pb-1"
               >
                 <div className="min-w-0">
-                  <p className="mono truncate font-medium text-[var(--text)]">
-                    {user.username}
-                  </p>
+                  <CopyableUsername username={user.username} />
                   <p className="mt-0.5 text-sm text-[var(--muted)]">
                     {new Date(user.createdAt).toLocaleString()} ·{" "}
                     <span className="mono">
@@ -240,8 +258,6 @@ export function Dashboard({ initialUsers }: Props) {
                   </p>
                 </div>
                 <div className="flex items-center gap-2">
-                  <CopyButton value={user.username} label="username" />
-                  <CopyButton value={user.password} label="password" />
                   <button
                     type="button"
                     onClick={() => onDelete(user)}
