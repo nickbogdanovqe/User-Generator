@@ -1,36 +1,82 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# User Generator
 
-## Getting Started
+Secure Vercel web app for creating and deleting fresh Aurora test users (`mobileaurora_*`), mirroring the Maestro `create:fresh-aurora-user` / `delete:fresh-aurora-user` flows from `mobile-app-v2`.
 
-First, run the development server:
+All Digital Banking and Transmit secrets stay **server-side**. The browser only sees:
+
+- a shared app-password login
+- generated username / password after create
+- the saved user list (from private Vercel Blob)
+
+## Features
+
+- App-password gate with signed httpOnly session cookie (12h)
+- Create users for `dev` or `tst`
+- Persist created users in **private** Vercel Blob (`users/{env}/{username}.json`)
+- Delete users (Transmit remove-from-app + Digital Banking delete + Blob cleanup)
+- Aurora migration via Digital Banking user-flags (same path Maestro uses when SSO admin is unreachable — required on Vercel)
+
+## Local development
 
 ```bash
+cp .env.example .env.local
+# fill APP_PASSWORD, SESSION_SECRET, Digital Banking + Transmit secrets,
+# and BLOB_READ_WRITE_TOKEN (from a Vercel Blob store)
+
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Generate a session secret:
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+openssl rand -base64 32
+```
 
-## Learn More
+## Environment variables
 
-To learn more about Next.js, take a look at the following resources:
+| Variable | Required | Purpose |
+| --- | --- | --- |
+| `APP_PASSWORD` | yes | Shared UI password |
+| `SESSION_SECRET` | yes | HMAC cookie signing (≥16 chars; use 32+) |
+| `client_id` | yes | Digital Banking OAuth client |
+| `client_secret` | yes | Digital Banking OAuth secret |
+| `x-api-key` | yes | Digital Banking API key |
+| `TRANSMIT_CLIENT_ID_TST` | yes* | Transmit client id (*or `TRANSMIT_ADMIN_CLIENT_ID`) |
+| `TRANSMIT_CLIENT_SECRET_TST` | yes* | Transmit client secret (*or `TRANSMIT_ADMIN_CLIENT_SECRET`) |
+| `BLOB_READ_WRITE_TOKEN` | yes | Vercel Blob read/write token |
+| `AUTH_DIGITAL_BANKING_API_BASE_URL` | no | Default `https://qa-api.firsthorizon.com` |
+| `TRANSMIT_ADMIN_API_BASE_URL` | no | Default `https://api.transmitsecurity.io` |
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Never prefix these with `NEXT_PUBLIC_`.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Vercel deploy checklist
 
-## Deploy on Vercel
+1. Push this repo to GitHub and import the project in Vercel.
+2. **Storage → Create / Link Blob store** for the project (sets `BLOB_READ_WRITE_TOKEN`).
+3. In Project → Settings → Environment Variables, add all secrets from `.env.example` for Production (and Preview if needed).
+4. Deploy. Create/delete routes use `maxDuration = 60` (Pro plan if you need the full minute).
+5. Open the deployment URL → sign in with `APP_PASSWORD` → create a user.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+### Security notes
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- Middleware blocks unauthenticated access to everything except `/login`.
+- Mutations require an authenticated session; errors are sanitized before returning to the client.
+- Blob objects are stored with `access: "private"` so credentials are not world-readable via URL.
+- Password comparison uses timing-safe equality.
+
+## Credentials produced
+
+| Field | Value |
+| --- | --- |
+| Username | `mobileaurora_<9 digits>` |
+| Password | `Bank1234567!` |
+
+## Scripts mirrored
+
+Logic is ported (not imported) from:
+
+- `mobile/mobile-app-v2/tests/maestro/scripts/provision-fresh-aurora-user.ts`
+- Digital Banking + Transmit helpers under `apps/auth/tests/playwright/helpers/`
