@@ -43,7 +43,7 @@ openssl rand -base64 32
 | `SESSION_SECRET` | yes | HMAC cookie signing (≥16 chars; use 32+) |
 | `client_id` | yes | Digital Banking OAuth client |
 | `client_secret` | yes | Digital Banking OAuth secret |
-| `x-api-key` | yes | Digital Banking API key |
+| `x_api_key` | yes | Digital Banking API key (sent as `x-api-key` header) |
 | `TRANSMIT_CLIENT_ID_TST` | yes* | Transmit client id (*or `TRANSMIT_ADMIN_CLIENT_ID`) |
 | `TRANSMIT_CLIENT_SECRET_TST` | yes* | Transmit client secret (*or `TRANSMIT_ADMIN_CLIENT_SECRET`) |
 | `BLOB_READ_WRITE_TOKEN` | yes | Vercel Blob read/write token |

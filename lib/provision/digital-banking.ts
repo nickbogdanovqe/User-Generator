@@ -95,7 +95,7 @@ export function createDigitalBankingUsersApi(
   const clientId = requireEnv(env, "client_id");
   const clientSecret = requireEnv(env, "client_secret");
   const grantType = env.grant_type ?? "client_credentials";
-  const apiKey = requireEnv(env, "x-api-key");
+  const apiKey = requireEnv(env, "x_api_key");
 
   async function getAccessToken(): Promise<string> {
     const tokenUrl = new URL("/v0/oauth/accesstoken", baseUrl);
