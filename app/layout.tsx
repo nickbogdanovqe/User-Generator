@@ -1,15 +1,16 @@
 import type { Metadata } from "next";
-import { Fraunces, IBM_Plex_Mono, Outfit } from "next/font/google";
+import { IBM_Plex_Mono, Space_Grotesk, Syne } from "next/font/google";
 import "./globals.css";
 
-const outfit = Outfit({
+const spaceGrotesk = Space_Grotesk({
   variable: "--font-display",
   subsets: ["latin"],
 });
 
-const fraunces = Fraunces({
+const syne = Syne({
   variable: "--font-brand",
   subsets: ["latin"],
+  weight: ["600", "700"],
 });
 
 const plexMono = IBM_Plex_Mono({
@@ -31,7 +32,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${outfit.variable} ${fraunces.variable} ${plexMono.variable} h-full antialiased`}
+      className={`${spaceGrotesk.variable} ${syne.variable} ${plexMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">{children}</body>
     </html>

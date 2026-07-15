@@ -23,7 +23,7 @@ function CopyButton({ value, label }: { value: string; label: string }) {
         setCopied(true);
         window.setTimeout(() => setCopied(false), 1200);
       }}
-      className="rounded-lg border border-[var(--stroke)] px-2.5 py-1 text-xs text-[var(--muted)] transition hover:border-[var(--accent)] hover:text-[var(--accent)]"
+      className="btn-ghost mono px-2.5 py-1 text-xs"
       aria-label={`Copy ${label}`}
     >
       {copied ? "Copied" : "Copy"}
@@ -39,15 +39,12 @@ function CredentialRow({
   value: string;
 }) {
   return (
-    <div className="flex items-center justify-between gap-3 rounded-xl border border-[var(--stroke)] bg-black/20 px-3 py-2.5">
+    <div className="cred">
       <div className="min-w-0">
-        <p className="text-xs uppercase tracking-wide text-[var(--muted)]">
+        <p className="text-[0.7rem] font-medium uppercase tracking-[0.12em] text-[var(--muted)]">
           {label}
         </p>
-        <p
-          className="truncate font-medium"
-          style={{ fontFamily: "var(--font-mono), monospace" }}
-        >
+        <p className="mono truncate text-sm font-medium text-[var(--text)]">
           {value}
         </p>
       </div>
@@ -109,64 +106,54 @@ export function Dashboard({ initialUsers }: Props) {
   }, []);
 
   return (
-    <div className="mx-auto flex w-full max-w-5xl flex-col gap-8 px-6 py-10">
-      <header className="animate-fade-up flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <p
-            className="mb-1 text-sm uppercase tracking-[0.22em] text-[var(--accent)]"
-            style={{ fontFamily: "var(--font-brand), serif" }}
-          >
-            User Generator
-          </p>
-          <h1 className="text-4xl font-semibold tracking-tight">
+    <div className="mx-auto flex w-full max-w-5xl flex-col gap-7 px-6 py-10">
+      <header className="animate-fade-up flex flex-wrap items-start justify-between gap-5">
+        <div className="max-w-2xl">
+          <p className="brand-mark mb-3">User Generator</p>
+          <h1 className="text-3xl font-semibold tracking-tight text-[var(--text)] md:text-[2.15rem]">
             Fresh Aurora users
           </h1>
-          <p className="mt-2 max-w-xl text-[var(--muted)]">
-            Create and clean up Digital Banking + Transmit test users. Secrets
-            stay on the server; credentials appear only after you authenticate.
+          <p className="mt-2 max-w-xl text-[var(--muted)] leading-relaxed">
+            Provision Digital Banking + Transmit test users. Secrets stay on the
+            server; credentials surface only after you authenticate.
           </p>
         </div>
-        <form action={logoutAction}>
-          <button
-            type="submit"
-            className="rounded-xl border border-[var(--stroke)] px-4 py-2 text-sm text-[var(--muted)] transition hover:border-[var(--accent)] hover:text-[var(--accent)]"
-          >
+        <form action={logoutAction} className="pt-1">
+          <button type="submit" className="btn-ghost px-4 py-2 text-sm">
             Sign out
           </button>
         </form>
       </header>
 
-      <section className="animate-fade-up rounded-3xl border border-[var(--stroke)] bg-[var(--bg-panel)] p-6 shadow-[0_20px_60px_rgba(0,0,0,0.25)] backdrop-blur-md [animation-delay:80ms]">
+      <section
+        className="panel animate-fade-up p-6 md:p-7"
+        style={{ animationDelay: "70ms" }}
+      >
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
-            <h2 className="text-lg font-medium">Create user</h2>
+            <div className="mb-1 flex items-center gap-2">
+              <span className="status-dot" />
+              <h2 className="text-lg font-semibold tracking-tight">
+                Create user
+              </h2>
+            </div>
             <p className="text-sm text-[var(--muted)]">
-              Username pattern{" "}
-              <code
-                className="text-[var(--accent)]"
-                style={{ fontFamily: "var(--font-mono), monospace" }}
-              >
+              Pattern{" "}
+              <code className="mono text-[var(--accent-strong)]">
                 mobileaurora_*********
               </code>
             </p>
           </div>
 
           <div className="flex flex-wrap items-center gap-3">
-            <div
-              className="inline-flex rounded-xl border border-[var(--stroke)] bg-black/20 p-1"
-              role="group"
-              aria-label="Environment"
-            >
+            <div className="seg" role="group" aria-label="Environment">
               {(["dev", "tst"] as const).map((env) => (
                 <button
                   key={env}
                   type="button"
                   onClick={() => setTestEnv(env)}
-                  className={`rounded-lg px-3 py-1.5 text-sm transition ${
-                    testEnv === env
-                      ? "bg-[var(--accent-soft)] text-[var(--accent)]"
-                      : "text-[var(--muted)] hover:text-[var(--text)]"
-                  }`}
+                  data-active={testEnv === env}
+                  className="seg-btn"
                 >
                   {env}
                 </button>
@@ -177,10 +164,10 @@ export function Dashboard({ initialUsers }: Props) {
               type="button"
               onClick={onCreate}
               disabled={isPending}
-              className="rounded-xl bg-[var(--accent)] px-4 py-2.5 font-medium text-[#1a1508] transition hover:brightness-110 disabled:cursor-wait disabled:opacity-70"
+              className="btn-primary px-4 py-2.5 text-sm"
             >
               {isPending && !deletingUsername ? (
-                <span className="animate-pulse-soft">Creating…</span>
+                <span className="animate-pulse-soft">Provisioning…</span>
               ) : (
                 "Create user"
               )}
@@ -189,56 +176,65 @@ export function Dashboard({ initialUsers }: Props) {
         </div>
 
         {error ? (
-          <p className="mt-4 rounded-xl border border-[var(--danger)]/30 bg-[var(--danger)]/10 px-3 py-2 text-sm text-[var(--danger)]">
+          <p className="mt-5 rounded-xl border border-[var(--danger)]/25 bg-[var(--danger-soft)] px-3 py-2.5 text-sm text-[var(--danger)]">
             {error}
           </p>
         ) : null}
 
         {warnings.length > 0 ? (
-          <p className="mt-4 rounded-xl border border-[var(--accent)]/30 bg-[var(--accent-soft)] px-3 py-2 text-sm text-[var(--accent)]">
+          <p className="mt-5 rounded-xl border border-[var(--warn)]/25 bg-[var(--warn-soft)] px-3 py-2.5 text-sm text-[var(--warn)]">
             Deleted with warnings: {warnings.join("; ")}
           </p>
         ) : null}
 
         {latest ? (
-          <div className="mt-5 grid gap-2 sm:grid-cols-2">
+          <div className="mt-5 grid gap-2.5 sm:grid-cols-2">
             <CredentialRow label="Username" value={latest.username} />
             <CredentialRow label="Password" value={latest.password} />
-            <CredentialRow label="External user ID" value={latest.externalUserId} />
+            <CredentialRow
+              label="External user ID"
+              value={latest.externalUserId}
+            />
             <CredentialRow label="Environment" value={latest.testEnv} />
           </div>
-        ) : null}
+        ) : (
+          <div className="mt-5 rounded-2xl border border-dashed border-[var(--stroke-strong)] bg-[var(--bg-inset)]/60 px-4 py-8 text-center text-sm text-[var(--muted)]">
+            Credentials will appear here after a successful create.
+          </div>
+        )}
       </section>
 
-      <section className="animate-fade-up rounded-3xl border border-[var(--stroke)] bg-[var(--bg-panel)] p-6 [animation-delay:140ms]">
-        <div className="mb-4 flex items-baseline justify-between gap-3">
-          <h2 className="text-lg font-medium">Saved users ({testEnv})</h2>
-          <p className="text-sm text-[var(--muted)]">
+      <section
+        className="panel animate-fade-up p-6 md:p-7"
+        style={{ animationDelay: "130ms" }}
+      >
+        <div className="mb-5 flex items-baseline justify-between gap-3">
+          <h2 className="text-lg font-semibold tracking-tight">
+            Registry · {testEnv}
+          </h2>
+          <p className="mono text-xs uppercase tracking-[0.12em] text-[var(--muted)]">
             {filtered.length} stored
           </p>
         </div>
 
         {filtered.length === 0 ? (
-          <p className="rounded-2xl border border-dashed border-[var(--stroke)] px-4 py-10 text-center text-[var(--muted)]">
-            No users saved for {testEnv} yet.
+          <p className="rounded-2xl border border-dashed border-[var(--stroke-strong)] px-4 py-12 text-center text-[var(--muted)]">
+            No users stored for {testEnv} yet.
           </p>
         ) : (
           <ul className="divide-y divide-[var(--stroke)]">
             {filtered.map((user) => (
               <li
                 key={`${user.testEnv}-${user.username}`}
-                className="flex flex-wrap items-center justify-between gap-3 py-4"
+                className="flex flex-wrap items-center justify-between gap-3 py-4 first:pt-1 last:pb-1"
               >
                 <div className="min-w-0">
-                  <p
-                    className="truncate font-medium"
-                    style={{ fontFamily: "var(--font-mono), monospace" }}
-                  >
+                  <p className="mono truncate font-medium text-[var(--text)]">
                     {user.username}
                   </p>
-                  <p className="text-sm text-[var(--muted)]">
+                  <p className="mt-0.5 text-sm text-[var(--muted)]">
                     {new Date(user.createdAt).toLocaleString()} ·{" "}
-                    <span style={{ fontFamily: "var(--font-mono), monospace" }}>
+                    <span className="mono">
                       {user.externalUserId.slice(0, 8)}…
                     </span>
                   </p>
@@ -250,7 +246,7 @@ export function Dashboard({ initialUsers }: Props) {
                     type="button"
                     onClick={() => onDelete(user)}
                     disabled={isPending}
-                    className="rounded-xl border border-[var(--danger)]/40 px-3 py-1.5 text-sm text-[var(--danger)] transition hover:bg-[var(--danger)]/10 disabled:opacity-60"
+                    className="btn-danger px-3 py-1.5 text-sm"
                   >
                     {deletingUsername === user.username
                       ? "Deleting…"

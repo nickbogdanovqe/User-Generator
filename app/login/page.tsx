@@ -11,20 +11,22 @@ export default async function LoginPage() {
 
   return (
     <main className="relative flex flex-1 items-center justify-center px-6 py-16">
-      <div className="animate-fade-up w-full max-w-md rounded-3xl border border-[var(--stroke)] bg-[var(--bg-panel)] p-8 shadow-[0_24px_80px_rgba(0,0,0,0.35)] backdrop-blur-md">
-        <p
-          className="mb-2 text-sm uppercase tracking-[0.22em] text-[var(--accent)]"
-          style={{ fontFamily: "var(--font-brand), serif" }}
-        >
-          User Generator
-        </p>
-        <h1 className="mb-2 text-3xl font-semibold tracking-tight">
-          Secure access
-        </h1>
-        <p className="mb-8 text-[var(--muted)]">
-          Enter the shared app password. API secrets never leave the server.
-        </p>
+      <div className="panel animate-fade-up w-full max-w-md p-8 md:p-9">
+        <div className="mb-8">
+          <p className="brand-mark mb-5">User Generator</p>
+          <h1 className="mb-2 text-2xl font-semibold tracking-tight text-[var(--text)]">
+            Secure access
+          </h1>
+          <p className="text-[var(--muted)] leading-relaxed">
+            Shared password gate. Provisioning secrets stay server-side — never
+            exposed to the browser.
+          </p>
+        </div>
         <LoginForm />
+        <div className="mt-7 flex items-center gap-2 text-xs uppercase tracking-[0.14em] text-[var(--muted)]">
+          <span className="status-dot" />
+          Encrypted session · httpOnly cookie
+        </div>
       </div>
     </main>
   );
