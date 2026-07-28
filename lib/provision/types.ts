@@ -6,6 +6,9 @@ export type StoredUser = {
   externalUserId: string;
   testEnv: TestEnv;
   createdAt: string;
+  /** Requested at create; Digital Banking may only persist interpose. */
+  ecifId?: string;
+  interposeId?: string;
   pathname?: string;
 };
 

@@ -11,6 +11,7 @@ import {
 import { listStoredUsers } from "@/lib/blob/users";
 import { createFreshAuroraUser } from "@/lib/provision/create-user";
 import { deleteFreshAuroraUser } from "@/lib/provision/delete-user";
+import { normalizeOptionalFhnId } from "@/lib/provision/draft";
 import {
   isTestEnv,
   type StoredUser,
@@ -94,8 +95,19 @@ export async function createUserAction(
     if (!isTestEnv(input.testEnv)) {
       return { ok: false, error: 'Environment must be "dev" or "tst"' };
     }
-    const ecifId = input.ecifId?.trim() || undefined;
-    const interpose = input.interposeId?.trim() || undefined;
+
+    let ecifId: string | undefined;
+    let interpose: string | undefined;
+    try {
+      ecifId = normalizeOptionalFhnId(input.ecifId);
+      interpose = normalizeOptionalFhnId(input.interposeId);
+    } catch (error) {
+      return {
+        ok: false,
+        error: error instanceof Error ? error.message : "Invalid FHN id",
+      };
+    }
+
     const user = await createFreshAuroraUser(input.testEnv, {
       ecifId,
       interpose,

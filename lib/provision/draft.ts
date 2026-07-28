@@ -1,12 +1,31 @@
 import { randomInt, randomUUID } from "node:crypto";
 import { FIXED_PASSWORD, type UserDraft } from "@/lib/provision/types";
 
-const SEED = {
-  firstName: "DOROTHY",
-  lastName: "BUSHING",
+export const SEED_IDS = {
   ecifId: "102175008",
   interpose: "00004451009944740791",
 } as const;
+
+const SEED = {
+  firstName: "DOROTHY",
+  lastName: "BUSHING",
+  ...SEED_IDS,
+} as const;
+
+/** Digits-only FHN ids; reject empty / literal "undefined" from bad API mapping. */
+export function normalizeOptionalFhnId(value: string | undefined): string | undefined {
+  const trimmed = value?.trim();
+  if (!trimmed) return undefined;
+  if (/^undefined$/i.test(trimmed)) {
+    throw new Error('FHN id must not be the literal string "undefined"');
+  }
+  if (!/^\d{5,32}$/.test(trimmed)) {
+    throw new Error(
+      "ECIF and Interpose IDs must be 5–32 digits when provided",
+    );
+  }
+  return trimmed;
+}
 
 function buildUniquePhoneNumber(uniqueId: string): string {
   const areaCodes = ["202", "212", "213", "305", "312", "404", "415", "646"];
@@ -37,7 +56,7 @@ export function createFreshAuroraUserDraft(
     firstName: `Auth${uniqueId.slice(0, 12)}`,
     lastName: SEED.lastName,
     primaryPhoneNumber: buildUniquePhoneNumber(uniqueId),
-    ecifId: overrides.ecifId?.trim() || SEED.ecifId,
-    interpose: overrides.interpose?.trim() || SEED.interpose,
+    ecifId: normalizeOptionalFhnId(overrides.ecifId) ?? SEED.ecifId,
+    interpose: normalizeOptionalFhnId(overrides.interpose) ?? SEED.interpose,
   };
 }

@@ -81,8 +81,23 @@ Never prefix these with `NEXT_PUBLIC_`.
 | --- | --- |
 | Username | `mobileaurora_<9 digits>` |
 | Password | `Bank1234567!` |
-| ECIF ID | Optional override; default `102175008` |
-| Interpose ID | Optional override; default `00004451009944740791` |
+| ECIF ID | Optional override; default `102175008` (often **not** persisted by Digital Banking — only interpose is) |
+| Interpose ID | Optional override; default `00004451009944740791` (**required** for login customer lookup) |
+
+Create now verifies after provision that:
+
+- Digital Banking has a usable `interpose` fhnId (not missing / not `"undefined"`)
+- Aurora flags are `auroraUser=true`, `migrationEligible=true`, `migrationStatus=COMPLETE`
+- Transmit user exists (and username resolves on `dev`)
+
+### Login troubleshooting
+
+Mobile copy **“Something went wrong / We encountered an issue processing your request”** is the Transmit login form’s catch-all for unmapped journey errors (often interpose/customer lookup such as `FH_0000034`).
+
+- Leave ECIF/Interpose empty unless you have a known-good customer interpose; bad overrides break login.
+- Prefer the seed interpose above; Digital Banking create keeps **only** the interpose fhnId (ECIF is dropped by the API).
+- Maestro `create:fresh-aurora-user` and this app’s flags-only path produce the same migration flags when compared side-by-side.
+- Password auth for freshly provisioned users can succeed while a later journey policy step still rejects the session — that surfaces as Request Denied / rejection, not this app’s create failure.
 
 ## Scripts mirrored
 

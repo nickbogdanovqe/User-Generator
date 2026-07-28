@@ -74,10 +74,27 @@ export function isNotFoundError(error: unknown): boolean {
   return error instanceof Error && /\b404\b/.test(error.message);
 }
 
+export type DigitalBankingFhnId = {
+  fhnIdType?: string;
+  fhnIdValue?: string;
+};
+
+export type DigitalBankingUserProfile = {
+  login?: string;
+  fhnIds?: DigitalBankingFhnId[];
+  userStatus?: {
+    auroraUser?: string | boolean;
+    migrationEligible?: string | boolean;
+    migrationMandatory?: string | boolean;
+    migrationStatus?: string;
+  };
+};
+
 export type DigitalBankingUsersApi = {
   createUser: (
     user: CreateDigitalBankingUserInput,
   ) => Promise<{ guid: string; status: string }>;
+  getUser: (guid: string) => Promise<DigitalBankingUserProfile>;
   recoverUser: (guid: string) => Promise<{ status: string; guid?: string }>;
   patchUserFlags: (
     userId: string,
@@ -192,6 +209,41 @@ export function createDigitalBankingUsersApi(
         }),
       });
       return CreateUserResponseSchema.parse(await readJson(response)).result;
+    },
+
+    async getUser(guid) {
+      const response = await request(
+        `/v2/users/digital-banking/${encodeURIComponent(guid)}`,
+      );
+      const payload = (await readJson(response)) as {
+        result?: {
+          profile?: Record<string, unknown>;
+          userStatus?: Record<string, unknown>;
+        };
+      };
+      const profile = payload?.result?.profile ?? {};
+      const userStatus = payload?.result?.userStatus ?? {};
+      return {
+        login: typeof profile.login === "string" ? profile.login : undefined,
+        fhnIds: Array.isArray(profile.fhnIds)
+          ? (profile.fhnIds as DigitalBankingFhnId[])
+          : undefined,
+        userStatus: {
+          auroraUser: userStatus.auroraUser as string | boolean | undefined,
+          migrationEligible: userStatus.migrationEligible as
+            | string
+            | boolean
+            | undefined,
+          migrationMandatory: userStatus.migrationMandatory as
+            | string
+            | boolean
+            | undefined,
+          migrationStatus:
+            typeof userStatus.migrationStatus === "string"
+              ? userStatus.migrationStatus
+              : undefined,
+        },
+      };
     },
 
     async recoverUser(guid) {

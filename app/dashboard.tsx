@@ -13,6 +13,7 @@ import {
   logoutAction,
 } from "@/app/actions";
 import { isTestEnv, type StoredUser, type TestEnv } from "@/lib/provision/types";
+import { SEED_IDS } from "@/lib/provision/draft";
 
 type Props = {
   initialUsers: StoredUser[];
@@ -243,13 +244,19 @@ export function Dashboard({ initialUsers }: Props) {
             </span>
             <input
               type="text"
+              inputMode="numeric"
+              pattern="[0-9]*"
               value={ecifId}
               onChange={(event) => setEcifId(event.target.value)}
-              placeholder="Default seed if empty"
+              placeholder={SEED_IDS.ecifId}
               className="field mono px-3 py-2.5 text-sm"
               autoComplete="off"
               spellCheck={false}
             />
+            <span className="text-xs text-[var(--muted)]">
+              Leave empty for seed. Digital Banking may not persist ECIF; interpose
+              is what login uses.
+            </span>
           </label>
           <label className="flex flex-col gap-1.5">
             <span className="text-[0.7rem] font-medium uppercase tracking-[0.12em] text-[var(--muted)]">
@@ -258,13 +265,19 @@ export function Dashboard({ initialUsers }: Props) {
             </span>
             <input
               type="text"
+              inputMode="numeric"
+              pattern="[0-9]*"
               value={interposeId}
               onChange={(event) => setInterposeId(event.target.value)}
-              placeholder="Default seed if empty"
+              placeholder={SEED_IDS.interpose}
               className="field mono px-3 py-2.5 text-sm"
               autoComplete="off"
               spellCheck={false}
             />
+            <span className="text-xs text-[var(--muted)]">
+              Must be a real customer interpose (digits only). Bad values cause
+              login “Something went wrong”.
+            </span>
           </label>
         </div>
 
@@ -289,6 +302,12 @@ export function Dashboard({ initialUsers }: Props) {
               value={latest.externalUserId}
             />
             <CredentialRow label="Environment" value={latest.testEnv} />
+            {latest.interposeId ? (
+              <CredentialRow label="Interpose ID" value={latest.interposeId} />
+            ) : null}
+            {latest.ecifId ? (
+              <CredentialRow label="ECIF ID (requested)" value={latest.ecifId} />
+            ) : null}
           </div>
         ) : (
           <div className="mt-5 rounded-2xl border border-dashed border-[var(--stroke-strong)] bg-[var(--bg-inset)]/60 px-4 py-8 text-center text-sm text-[var(--muted)]">
