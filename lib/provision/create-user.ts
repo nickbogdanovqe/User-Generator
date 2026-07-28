@@ -2,7 +2,10 @@ import {
   createDigitalBankingUsersApi,
   markUserAuroraMigrationComplete,
 } from "@/lib/provision/digital-banking";
-import { createFreshAuroraUserDraft } from "@/lib/provision/draft";
+import {
+  createFreshAuroraUserDraft,
+  type DraftOverrides,
+} from "@/lib/provision/draft";
 import {
   createTransmitAdminApi,
   createTransmitOtpUser,
@@ -13,8 +16,13 @@ import { saveStoredUser } from "@/lib/blob/users";
 
 export async function createFreshAuroraUser(
   testEnv: TestEnv,
+  overrides: DraftOverrides = {},
 ): Promise<StoredUser> {
-  const draft = createFreshAuroraUserDraft();
+  // Mirror Maestro linkTransmitAdminCredentialsFromTestEnv — shared DB +
+  // Transmit *_TST creds; TEST_ENV drives Transmit username/password-auth shape.
+  process.env.TEST_ENV = testEnv;
+
+  const draft = createFreshAuroraUserDraft(overrides);
   const digitalBanking = createDigitalBankingUsersApi();
   const transmit = createTransmitAdminApi();
 

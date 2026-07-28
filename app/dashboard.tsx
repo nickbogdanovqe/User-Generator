@@ -1,16 +1,24 @@
 "use client";
 
-import { useCallback, useMemo, useState, useTransition } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+  useTransition,
+} from "react";
 import {
   createUserAction,
   deleteUserAction,
   logoutAction,
 } from "@/app/actions";
-import type { StoredUser, TestEnv } from "@/lib/provision/types";
+import { isTestEnv, type StoredUser, type TestEnv } from "@/lib/provision/types";
 
 type Props = {
   initialUsers: StoredUser[];
 };
+
+const TEST_ENV_STORAGE_KEY = "user-generator.testEnv";
 
 function CopyButton({ value, label }: { value: string; label: string }) {
   const [copied, setCopied] = useState(false);
@@ -75,12 +83,34 @@ function CredentialRow({
 
 export function Dashboard({ initialUsers }: Props) {
   const [testEnv, setTestEnv] = useState<TestEnv>("dev");
+  const [ecifId, setEcifId] = useState("");
+  const [interposeId, setInterposeId] = useState("");
   const [users, setUsers] = useState(initialUsers);
   const [latest, setLatest] = useState<StoredUser | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [warnings, setWarnings] = useState<string[]>([]);
   const [isPending, startTransition] = useTransition();
   const [deletingUsername, setDeletingUsername] = useState<string | null>(null);
+
+  useEffect(() => {
+    try {
+      const stored = window.localStorage.getItem(TEST_ENV_STORAGE_KEY);
+      if (stored && isTestEnv(stored)) {
+        setTestEnv(stored);
+      }
+    } catch {
+      // ignore storage access errors
+    }
+  }, []);
+
+  const onTestEnvChange = useCallback((next: TestEnv) => {
+    setTestEnv(next);
+    try {
+      window.localStorage.setItem(TEST_ENV_STORAGE_KEY, next);
+    } catch {
+      // ignore storage access errors
+    }
+  }, []);
 
   const filtered = useMemo(
     () => users.filter((user) => user.testEnv === testEnv),
@@ -91,7 +121,11 @@ export function Dashboard({ initialUsers }: Props) {
     setError(null);
     setWarnings([]);
     startTransition(async () => {
-      const result = await createUserAction(testEnv);
+      const result = await createUserAction({
+        testEnv,
+        ecifId: ecifId.trim() || undefined,
+        interposeId: interposeId.trim() || undefined,
+      });
       if (!result.ok) {
         setError(result.error);
         return;
@@ -102,7 +136,7 @@ export function Dashboard({ initialUsers }: Props) {
         ...prev.filter((u) => u.username !== result.data.username),
       ]);
     });
-  }, [testEnv]);
+  }, [testEnv, ecifId, interposeId]);
 
   const onDelete = useCallback((user: StoredUser) => {
     setError(null);
@@ -149,7 +183,7 @@ export function Dashboard({ initialUsers }: Props) {
         className="panel animate-fade-up p-6 md:p-7"
         style={{ animationDelay: "70ms" }}
       >
-        <div className="flex flex-wrap items-center justify-between gap-4">
+        <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
             <div className="mb-1 flex items-center gap-2">
               <span className="status-dot" />
@@ -165,20 +199,26 @@ export function Dashboard({ initialUsers }: Props) {
             </p>
           </div>
 
-          <div className="flex flex-wrap items-center gap-3">
-            <div className="seg" role="group" aria-label="Environment">
-              {(["dev", "tst"] as const).map((env) => (
-                <button
-                  key={env}
-                  type="button"
-                  onClick={() => setTestEnv(env)}
-                  data-active={testEnv === env}
-                  className="seg-btn"
-                >
-                  {env}
-                </button>
-              ))}
-            </div>
+          <div className="flex flex-wrap items-end gap-3">
+            <label className="flex flex-col gap-1.5">
+              <span className="text-[0.7rem] font-medium uppercase tracking-[0.12em] text-[var(--muted)]">
+                Environment
+              </span>
+              <select
+                value={testEnv}
+                onChange={(event) => {
+                  const value = event.target.value;
+                  if (isTestEnv(value)) {
+                    onTestEnvChange(value);
+                  }
+                }}
+                className="field px-3 py-2.5 text-sm"
+                aria-label="Environment"
+              >
+                <option value="dev">dev</option>
+                <option value="tst">tst</option>
+              </select>
+            </label>
 
             <button
               type="button"
@@ -193,6 +233,39 @@ export function Dashboard({ initialUsers }: Props) {
               )}
             </button>
           </div>
+        </div>
+
+        <div className="mt-5 grid gap-3 sm:grid-cols-2">
+          <label className="flex flex-col gap-1.5">
+            <span className="text-[0.7rem] font-medium uppercase tracking-[0.12em] text-[var(--muted)]">
+              ECIF ID{" "}
+              <span className="normal-case tracking-normal">(optional)</span>
+            </span>
+            <input
+              type="text"
+              value={ecifId}
+              onChange={(event) => setEcifId(event.target.value)}
+              placeholder="Default seed if empty"
+              className="field mono px-3 py-2.5 text-sm"
+              autoComplete="off"
+              spellCheck={false}
+            />
+          </label>
+          <label className="flex flex-col gap-1.5">
+            <span className="text-[0.7rem] font-medium uppercase tracking-[0.12em] text-[var(--muted)]">
+              Interpose ID{" "}
+              <span className="normal-case tracking-normal">(optional)</span>
+            </span>
+            <input
+              type="text"
+              value={interposeId}
+              onChange={(event) => setInterposeId(event.target.value)}
+              placeholder="Default seed if empty"
+              className="field mono px-3 py-2.5 text-sm"
+              autoComplete="off"
+              spellCheck={false}
+            />
+          </label>
         </div>
 
         {error ? (

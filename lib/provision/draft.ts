@@ -19,7 +19,14 @@ function buildUniquePhoneNumber(uniqueId: string): string {
   return `+1${areaCode}555${lineNumber}`;
 }
 
-export function createFreshAuroraUserDraft(): UserDraft {
+export type DraftOverrides = {
+  ecifId?: string;
+  interpose?: string;
+};
+
+export function createFreshAuroraUserDraft(
+  overrides: DraftOverrides = {},
+): UserDraft {
   const username = `mobileaurora_${randomInt(100_000_000, 999_999_999)}`;
   const uniqueId = `${Date.now()}${randomUUID().replace(/-/g, "").slice(0, 8)}`;
 
@@ -30,7 +37,7 @@ export function createFreshAuroraUserDraft(): UserDraft {
     firstName: `Auth${uniqueId.slice(0, 12)}`,
     lastName: SEED.lastName,
     primaryPhoneNumber: buildUniquePhoneNumber(uniqueId),
-    ecifId: SEED.ecifId,
-    interpose: SEED.interpose,
+    ecifId: overrides.ecifId?.trim() || SEED.ecifId,
+    interpose: overrides.interpose?.trim() || SEED.interpose,
   };
 }

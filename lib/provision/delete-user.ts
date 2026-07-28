@@ -13,6 +13,9 @@ import { deleteStoredUser } from "@/lib/blob/users";
 export async function deleteFreshAuroraUser(user: StoredUser): Promise<{
   warnings: string[];
 }> {
+  // Mirror Maestro — tag process env for any helpers that read TEST_ENV.
+  process.env.TEST_ENV = user.testEnv;
+
   const digitalBanking = createDigitalBankingUsersApi();
   const transmit = createTransmitAdminApi();
   const warnings: string[] = [];

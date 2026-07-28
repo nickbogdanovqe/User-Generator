@@ -79,16 +79,27 @@ export async function listUsersAction(): Promise<ActionResult<StoredUser[]>> {
   }
 }
 
+export type CreateUserInput = {
+  testEnv: string;
+  ecifId?: string;
+  interposeId?: string;
+};
+
 export async function createUserAction(
-  testEnv: string,
+  input: CreateUserInput,
 ): Promise<ActionResult<StoredUser>> {
   try {
     await assertSameOrigin();
     await requireAuth();
-    if (!isTestEnv(testEnv)) {
+    if (!isTestEnv(input.testEnv)) {
       return { ok: false, error: 'Environment must be "dev" or "tst"' };
     }
-    const user = await createFreshAuroraUser(testEnv);
+    const ecifId = input.ecifId?.trim() || undefined;
+    const interpose = input.interposeId?.trim() || undefined;
+    const user = await createFreshAuroraUser(input.testEnv, {
+      ecifId,
+      interpose,
+    });
     return { ok: true, data: user };
   } catch (error) {
     return {

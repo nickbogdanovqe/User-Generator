@@ -11,10 +11,18 @@ All Digital Banking and Transmit secrets stay **server-side**. The browser only 
 ## Features
 
 - App-password gate with signed httpOnly session cookie (12h)
-- Create users for `dev` or `tst`
+- Create users for `dev` or `tst` (dropdown; last choice remembered in the browser)
+- Optional ECIF ID / Interpose ID overrides (empty → seed defaults used by Maestro)
 - Persist created users in **private** Vercel Blob (`users/{env}/{username}.json`)
 - Delete users (Transmit remove-from-app + Digital Banking delete + Blob cleanup)
 - Aurora migration via Digital Banking user-flags (same path Maestro uses when SSO admin is unreachable — required on Vercel)
+
+### How `dev` vs `tst` works
+
+Same as Maestro `provision-fresh-aurora-user`:
+
+- **Shared credentials**: Digital Banking (QA) and Transmit admin (`*_TST` / `TRANSMIT_ADMIN_*`) are the same for both envs.
+- **What changes**: Transmit create includes username + password auth on `dev`; on `tst` username is omitted and password-auth 403 is tolerated. Users are stored under `users/{dev|tst}/`.
 
 ## Local development
 
@@ -44,11 +52,11 @@ openssl rand -base64 32
 | `client_id` | yes | Digital Banking OAuth client |
 | `client_secret` | yes | Digital Banking OAuth secret |
 | `x_api_key` | yes | Digital Banking API key (sent as `x-api-key` header) |
-| `TRANSMIT_CLIENT_ID_TST` | yes* | Transmit client id (*or `TRANSMIT_ADMIN_CLIENT_ID`) |
-| `TRANSMIT_CLIENT_SECRET_TST` | yes* | Transmit client secret (*or `TRANSMIT_ADMIN_CLIENT_SECRET`) |
+| `TRANSMIT_CLIENT_ID_TST` | yes* | Transmit client id for **both** UI envs (*or `TRANSMIT_ADMIN_CLIENT_ID`) |
+| `TRANSMIT_CLIENT_SECRET_TST` | yes* | Transmit client secret for **both** UI envs (*or `TRANSMIT_ADMIN_CLIENT_SECRET`) |
 | `BLOB_READ_WRITE_TOKEN` | yes | Vercel Blob read/write token |
-| `AUTH_DIGITAL_BANKING_API_BASE_URL` | no | Default `https://qa-api.firsthorizon.com` |
-| `TRANSMIT_ADMIN_API_BASE_URL` | no | Default `https://api.transmitsecurity.io` |
+| `AUTH_DIGITAL_BANKING_API_BASE_URL` | no | Default `https://qa-api.firsthorizon.com` (shared) |
+| `TRANSMIT_ADMIN_API_BASE_URL` | no | Default `https://api.transmitsecurity.io` (shared) |
 
 Never prefix these with `NEXT_PUBLIC_`.
 
@@ -73,6 +81,8 @@ Never prefix these with `NEXT_PUBLIC_`.
 | --- | --- |
 | Username | `mobileaurora_<9 digits>` |
 | Password | `Bank1234567!` |
+| ECIF ID | Optional override; default `102175008` |
+| Interpose ID | Optional override; default `00004451009944740791` |
 
 ## Scripts mirrored
 
