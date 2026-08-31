@@ -7,11 +7,13 @@ import {
   useState,
   useTransition,
 } from "react";
+import Link from "next/link";
 import {
   createUserAction,
   deleteUserAction,
   logoutAction,
 } from "@/app/actions";
+import { CredentialRow } from "@/app/ui/credentials";
 import { isTestEnv, type StoredUser, type TestEnv } from "@/lib/provision/types";
 import { SEED_IDS } from "@/lib/provision/draft";
 
@@ -20,25 +22,6 @@ type Props = {
 };
 
 const TEST_ENV_STORAGE_KEY = "user-generator.testEnv";
-
-function CopyButton({ value, label }: { value: string; label: string }) {
-  const [copied, setCopied] = useState(false);
-
-  return (
-    <button
-      type="button"
-      onClick={async () => {
-        await navigator.clipboard.writeText(value);
-        setCopied(true);
-        window.setTimeout(() => setCopied(false), 1200);
-      }}
-      className="btn-ghost mono px-2.5 py-1 text-xs"
-      aria-label={`Copy ${label}`}
-    >
-      {copied ? "Copied" : "Copy"}
-    </button>
-  );
-}
 
 function CopyableUsername({ username }: { username: string }) {
   const [copied, setCopied] = useState(false);
@@ -57,28 +40,6 @@ function CopyableUsername({ username }: { username: string }) {
     >
       {copied ? "Copied!" : username}
     </button>
-  );
-}
-
-function CredentialRow({
-  label,
-  value,
-}: {
-  label: string;
-  value: string;
-}) {
-  return (
-    <div className="cred">
-      <div className="min-w-0">
-        <p className="text-[0.7rem] font-medium uppercase tracking-[0.12em] text-[var(--muted)]">
-          {label}
-        </p>
-        <p className="mono truncate text-sm font-medium text-[var(--text)]">
-          {value}
-        </p>
-      </div>
-      <CopyButton value={value} label={label} />
-    </div>
   );
 }
 
@@ -173,11 +134,19 @@ export function Dashboard({ initialUsers }: Props) {
             server; credentials surface only after you authenticate.
           </p>
         </div>
-        <form action={logoutAction} className="pt-1">
-          <button type="submit" className="btn-ghost px-4 py-2 text-sm">
-            Sign out
-          </button>
-        </form>
+        <div className="flex items-center gap-2 pt-1">
+          <Link
+            href="/external-users"
+            className="btn-ghost px-4 py-2 text-sm"
+          >
+            External users
+          </Link>
+          <form action={logoutAction}>
+            <button type="submit" className="btn-ghost px-4 py-2 text-sm">
+              Sign out
+            </button>
+          </form>
+        </div>
       </header>
 
       <section
