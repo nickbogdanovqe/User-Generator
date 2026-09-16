@@ -17,17 +17,5 @@ export default async function HomePage() {
         : "Could not load saved users from Blob storage";
   }
 
-  return (
-    <main className="flex flex-1 flex-col">
-      {listError ? (
-        <div className="mx-auto w-full max-w-5xl px-6 pt-8">
-          <p className="rounded-xl border border-[var(--warn)]/25 bg-[var(--warn-soft)] px-3 py-2.5 text-sm text-[var(--warn)]">
-            Blob list unavailable ({listError}). You can still create users once
-            BLOB_READ_WRITE_TOKEN is configured.
-          </p>
-        </div>
-      ) : null}
-      <Dashboard initialUsers={initialUsers} />
-    </main>
-  );
+  return <Dashboard initialUsers={initialUsers} listError={listError} />;
 }

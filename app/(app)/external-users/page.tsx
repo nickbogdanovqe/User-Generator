@@ -6,9 +6,5 @@ export const metadata = {
 };
 
 export default function ExternalUsersPage() {
-  return (
-    <main className="flex flex-1 flex-col">
-      <ExternalUsers groups={EXTERNAL_USER_GROUPS} />
-    </main>
-  );
+  return <ExternalUsers groups={EXTERNAL_USER_GROUPS} />;
 }

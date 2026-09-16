@@ -11,8 +11,9 @@ All Digital Banking and Transmit secrets stay **server-side**. The browser only 
 ## Features
 
 - App-password gate with signed httpOnly session cookie (12h)
-- Create users for `dev` or `tst` (dropdown; last choice remembered in the browser)
-- Optional ECIF ID / Interpose ID overrides (empty → seed defaults used by Maestro)
+- Dark console UI with a left sidebar: navigation (Fresh users / External users) plus a global `dev` / `tst` environment switcher shared across every page (persisted in local storage; governs provisioning and the registry view)
+- External users reference catalog with Retail / SMB / Comingled tabs, KPI summary cards, search, pod filter, and one-click copy
+- Optional username override (empty → random `mobileaurora_*`); optional ECIF ID / Interpose ID overrides (empty → seed defaults used by Maestro)
 - Persist created users in **private** Vercel Blob (`users/{env}/{username}.json`)
 - Delete users (Transmit remove-from-app + Digital Banking delete + Blob cleanup)
 - Aurora migration via Digital Banking user-flags (same path Maestro uses when SSO admin is unreachable — required on Vercel)
@@ -79,7 +80,7 @@ Never prefix these with `NEXT_PUBLIC_`.
 
 | Field | Value |
 | --- | --- |
-| Username | `mobileaurora_<9 digits>` |
+| Username | Random `mobileaurora_<16 digits>` (13-digit epoch timestamp ms + 3 random digits), or an optional custom login (3–64 letters, digits, `.`, `_`, `-`) |
 | Password | `Bank1234567!` |
 | ECIF ID | Optional override; default `102175008` (often **not** persisted by Digital Banking — only interpose is) |
 | Interpose ID | Optional override; default `00004451009944740791` (**required** for login customer lookup) |

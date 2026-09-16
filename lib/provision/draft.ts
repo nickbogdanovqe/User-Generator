@@ -27,6 +27,23 @@ export function normalizeOptionalFhnId(value: string | undefined): string | unde
   return trimmed;
 }
 
+/** Optional login; empty → auto-generate. Safe as a blob path segment. */
+export function normalizeOptionalUsername(
+  value: string | undefined,
+): string | undefined {
+  const trimmed = value?.trim();
+  if (!trimmed) return undefined;
+  if (/^undefined$/i.test(trimmed)) {
+    throw new Error('Username must not be the literal string "undefined"');
+  }
+  if (!/^[a-zA-Z0-9._-]{3,64}$/.test(trimmed)) {
+    throw new Error(
+      "Username must be 3–64 characters: letters, digits, period, underscore, or hyphen",
+    );
+  }
+  return trimmed;
+}
+
 function buildUniquePhoneNumber(uniqueId: string): string {
   const areaCodes = ["202", "212", "213", "305", "312", "404", "415", "646"];
   let hash = 0;
@@ -39,6 +56,7 @@ function buildUniquePhoneNumber(uniqueId: string): string {
 }
 
 export type DraftOverrides = {
+  username?: string;
   ecifId?: string;
   interpose?: string;
 };
@@ -46,7 +64,9 @@ export type DraftOverrides = {
 export function createFreshAuroraUserDraft(
   overrides: DraftOverrides = {},
 ): UserDraft {
-  const username = `mobileaurora_${randomInt(100_000_000, 999_999_999)}`;
+  const username =
+    normalizeOptionalUsername(overrides.username) ??
+    `mobileaurora_${Date.now()}${randomInt(100, 1000)}`;
   const uniqueId = `${Date.now()}${randomUUID().replace(/-/g, "").slice(0, 8)}`;
 
   return {

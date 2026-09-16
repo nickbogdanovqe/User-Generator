@@ -11,7 +11,10 @@ import {
 import { listStoredUsers } from "@/lib/blob/users";
 import { createFreshAuroraUser } from "@/lib/provision/create-user";
 import { deleteFreshAuroraUser } from "@/lib/provision/delete-user";
-import { normalizeOptionalFhnId } from "@/lib/provision/draft";
+import {
+  normalizeOptionalFhnId,
+  normalizeOptionalUsername,
+} from "@/lib/provision/draft";
 import {
   isTestEnv,
   type StoredUser,
@@ -82,6 +85,7 @@ export async function listUsersAction(): Promise<ActionResult<StoredUser[]>> {
 
 export type CreateUserInput = {
   testEnv: string;
+  username?: string;
   ecifId?: string;
   interposeId?: string;
 };
@@ -96,19 +100,22 @@ export async function createUserAction(
       return { ok: false, error: 'Environment must be "dev" or "tst"' };
     }
 
+    let username: string | undefined;
     let ecifId: string | undefined;
     let interpose: string | undefined;
     try {
+      username = normalizeOptionalUsername(input.username);
       ecifId = normalizeOptionalFhnId(input.ecifId);
       interpose = normalizeOptionalFhnId(input.interposeId);
     } catch (error) {
       return {
         ok: false,
-        error: error instanceof Error ? error.message : "Invalid FHN id",
+        error: error instanceof Error ? error.message : "Invalid provision input",
       };
     }
 
     const user = await createFreshAuroraUser(input.testEnv, {
+      username,
       ecifId,
       interpose,
     });
