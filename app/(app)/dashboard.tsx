@@ -468,7 +468,7 @@ export function Dashboard({ initialUsers, listError }: Props) {
               >
                 <div className="flex min-w-0 items-center gap-3">
                   <div
-                    className={`avatar-badge !h-9 !w-9 !rounded-xl text-[0.65rem] ${
+                    className={`avatar-badge h-9 w-9 rounded-xl text-[0.65rem] ${
                       user.testEnv === "dev" ? "tag-retail" : "env-tag-tst"
                     }`}
                   >

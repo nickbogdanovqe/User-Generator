@@ -14,7 +14,7 @@ const syne = Syne({
 });
 
 const plexMono = IBM_Plex_Mono({
-  variable: "--font-mono",
+  variable: "--font-plex-mono",
   weight: ["400", "500"],
   subsets: ["latin"],
 });

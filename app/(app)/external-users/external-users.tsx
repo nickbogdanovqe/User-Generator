@@ -142,7 +142,7 @@ function AccountTile({ account }: { account: ExternalAccount }) {
       type="button"
       onClick={() => copy(account.number)}
       data-copied={copied}
-      className="copy-tile group !flex-row !items-center !justify-between"
+      className="copy-tile group flex-row items-center justify-between"
       title={`Copy account number ${account.number}`}
       aria-label={`Copy account ${account.label} ${account.number}`}
     >

@@ -188,7 +188,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           >
             <MenuIcon className="h-4 w-4" />
           </button>
-          <span className="brand-glyph !h-7 !w-7 !rounded-lg" aria-hidden />
+          <span className="brand-glyph h-7 w-7 rounded-lg" aria-hidden />
           <span className="brand-mark text-base">User Generator</span>
         </div>
         <EnvSwitcher compact />
