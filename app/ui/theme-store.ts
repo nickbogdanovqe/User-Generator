@@ -2,7 +2,6 @@
 
 import { useSyncExternalStore } from "react";
 import {
-  DARK_SCHEME_QUERY,
   DEFAULT_THEME_PREFERENCE,
   THEME_STORAGE_KEY,
   isThemePreference,
@@ -22,12 +21,7 @@ function readStoredPreference(): ThemePreference {
   }
 }
 
-function systemTheme(): ResolvedTheme {
-  return window.matchMedia(DARK_SCHEME_QUERY).matches ? "dark" : "light";
-}
-
 export function resolveTheme(preference: ThemePreference): ResolvedTheme {
-  if (preference === "system") return systemTheme();
   return preference;
 }
 
@@ -83,13 +77,6 @@ export function setThemePreference(next: ThemePreference): void {
 function subscribe(listener: () => void): () => void {
   listeners.add(listener);
 
-  const media = window.matchMedia(DARK_SCHEME_QUERY);
-  const onMediaChange = () => {
-    if (getPreference() === "system") {
-      startTransition();
-      sync();
-    }
-  };
   const onStorage = (event: StorageEvent) => {
     if (event.key !== THEME_STORAGE_KEY) return;
     preference = isThemePreference(event.newValue)
@@ -99,12 +86,10 @@ function subscribe(listener: () => void): () => void {
     sync();
   };
 
-  media.addEventListener("change", onMediaChange);
   window.addEventListener("storage", onStorage);
 
   return () => {
     listeners.delete(listener);
-    media.removeEventListener("change", onMediaChange);
     window.removeEventListener("storage", onStorage);
   };
 }

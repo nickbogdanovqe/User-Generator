@@ -1,14 +1,13 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { MonitorIcon, MoonIcon, SunIcon } from "@/app/ui/icons";
+import { MoonIcon, SunIcon } from "@/app/ui/icons";
 import { THEME_PREFERENCES, type ThemePreference } from "@/app/ui/theme-config";
 import { useThemePreference } from "@/app/ui/theme-store";
 
 const OPTIONS: { value: ThemePreference; label: string; icon: ReactNode }[] = [
   { value: "light", label: "Light", icon: <SunIcon className="h-3.5 w-3.5" /> },
   { value: "dark", label: "Dark", icon: <MoonIcon className="h-3.5 w-3.5" /> },
-  { value: "system", label: "System", icon: <MonitorIcon className="h-3.5 w-3.5" /> },
 ];
 
 function nextPreference(current: ThemePreference): ThemePreference {
@@ -18,11 +17,11 @@ function nextPreference(current: ThemePreference): ThemePreference {
 
 /**
  * Appearance switcher. Full variant is a labelled segmented control; the
- * compact variant is a single icon button that cycles Light -> Dark -> System.
+ * compact variant is a single icon button that switches between Light and Dark.
  */
 export function ThemeToggle({ compact = false }: { compact?: boolean }) {
   const { preference, setPreference } = useThemePreference();
-  const active = OPTIONS.find((o) => o.value === preference) ?? OPTIONS[2];
+  const active = OPTIONS.find((o) => o.value === preference) ?? OPTIONS[1];
 
   if (compact) {
     const next = OPTIONS.find((o) => o.value === nextPreference(preference)) ?? OPTIONS[0];

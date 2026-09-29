@@ -11,7 +11,7 @@ All Digital Banking and Transmit secrets stay **server-side**. The browser only 
 ## Features
 
 - App-password gate with signed httpOnly session cookie (12h)
-- Light / dark / system theme (Appearance switcher in the sidebar and on the login page; persisted in local storage, applied before first paint so there is no flash)
+- Light / dark theme (Appearance switcher in the sidebar and on the login page; persisted in local storage, applied before first paint so there is no flash)
 - Console UI with a left sidebar: navigation (Fresh users / External users) plus a global `dev` / `tst` environment switcher shared across every page (persisted in local storage; governs provisioning and the registry view). Each env uses its own Transmit client. An env without credentials shows **Unavailable**; provisioning and delete stay off until those vars are set.
 - External users reference catalog with Retail / SMB / Comingled tabs, KPI summary cards, search, pod filter, and one-click copy
 - Optional username override (empty → random `mobileaurora_*`); optional ECIF ID / Interpose ID overrides (empty → seed defaults used by Maestro)
@@ -23,7 +23,7 @@ All Digital Banking and Transmit secrets stay **server-side**. The browser only 
 
 - **Digital Banking** credentials stay shared (`client_id`, `client_secret`, `x_api_key`).
 - **Transmit** uses a separate client id, client secret, and API base URL per env:
-  - `dev` → `TRANSMIT_CLIENT_ID_DEV` / `TRANSMIT_CLIENT_SECRET_DEV`, default base `https://transmit.dev.firsthorizon.com`
+  - `dev` → `TRANSMIT_CLIENT_ID_DEV` / `TRANSMIT_CLIENT_SECRET_DEV`, default base `https://api.transmitsecurity.io`
   - `tst` → `TRANSMIT_CLIENT_ID_TST` / `TRANSMIT_CLIENT_SECRET_TST` / `TRANSMIT_API_BASE_URL_TST`
 - An env with those vars missing is marked **Unavailable** in the switcher. Create and delete are rejected until the vars are set.
 - Transmit create includes username + password auth on `dev`; on `tst` username is omitted and password-auth 403 is tolerated. Users are stored under `users/{dev|tst}/`.
@@ -58,7 +58,7 @@ openssl rand -base64 32
 | `x_api_key` | yes | Digital Banking API key (sent as `x-api-key` header) |
 | `TRANSMIT_CLIENT_ID_DEV` | for DEV | Transmit client id used when the UI env is `dev` |
 | `TRANSMIT_CLIENT_SECRET_DEV` | for DEV | Transmit client secret used when the UI env is `dev` |
-| `TRANSMIT_API_BASE_URL_DEV` | no | Default `https://transmit.dev.firsthorizon.com` |
+| `TRANSMIT_API_BASE_URL_DEV` | no | Default `https://api.transmitsecurity.io` |
 | `TRANSMIT_CLIENT_ID_TST` | for TST | Transmit client id used when the UI env is `tst`. Missing → TST shows Unavailable |
 | `TRANSMIT_CLIENT_SECRET_TST` | for TST | Transmit client secret used when the UI env is `tst` |
 | `TRANSMIT_API_BASE_URL_TST` | for TST | Required once TST credentials are set. No default |

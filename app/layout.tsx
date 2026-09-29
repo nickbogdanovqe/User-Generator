@@ -38,7 +38,7 @@ export default function RootLayout({
       className={`${spaceGrotesk.variable} ${syne.variable} ${plexMono.variable} h-full antialiased`}
     >
       <head>
-        {/* Applies the persisted / system theme before first paint. */}
+        {/* Applies the persisted light or dark theme before first paint. */}
         <script dangerouslySetInnerHTML={{ __html: THEME_BOOTSTRAP_SCRIPT }} />
       </head>
       <body className="min-h-full flex flex-col">{children}</body>

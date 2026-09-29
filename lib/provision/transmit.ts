@@ -91,7 +91,7 @@ function supportsTransmitPasswordAuth(testEnv: TestEnv): boolean {
   return testEnv !== "tst";
 }
 
-const DEV_TRANSMIT_API_BASE_URL = "https://transmit.dev.firsthorizon.com";
+const DEV_TRANSMIT_API_BASE_URL = "https://api.transmitsecurity.io";
 
 function envSuffix(testEnv: TestEnv): "DEV" | "TST" {
   return testEnv === "dev" ? "DEV" : "TST";
