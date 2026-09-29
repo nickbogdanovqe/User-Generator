@@ -91,42 +91,74 @@ function supportsTransmitPasswordAuth(testEnv: TestEnv): boolean {
   return testEnv !== "tst";
 }
 
+const DEV_TRANSMIT_API_BASE_URL = "https://transmit.dev.firsthorizon.com";
+
+function envSuffix(testEnv: TestEnv): "DEV" | "TST" {
+  return testEnv === "dev" ? "DEV" : "TST";
+}
+
+function readTrimmed(env: Env, key: string): string | undefined {
+  const value = env[key]?.trim();
+  return value ? value : undefined;
+}
+
 /**
- * Resolve Transmit admin credentials the same way Maestro scripts do:
- * prefer TRANSMIT_ADMIN_*, else TRANSMIT_CLIENT_*_TST / TRANSMIT_CLIENT_*.
+ * DEV and TST each use their own Transmit client. DEV defaults to the
+ * First Horizon dev gateway; TST stays unconfigured until its vars are set.
  */
-export function resolveTransmitAdminCredentials(env: Env = process.env): {
+export function resolveTransmitAdminCredentials(
+  testEnv: TestEnv,
+  env: Env = process.env,
+): {
   clientId: string;
   clientSecret: string;
   baseUrl: string;
 } {
-  const clientId =
-    env.TRANSMIT_ADMIN_CLIENT_ID ??
-    env.TRANSMIT_CLIENT_ID_TST ??
-    env.TRANSMIT_CLIENT_ID;
-  const clientSecret =
-    env.TRANSMIT_ADMIN_CLIENT_SECRET ??
-    env.TRANSMIT_CLIENT_SECRET_TST ??
-    env.TRANSMIT_CLIENT_SECRET;
+  const suffix = envSuffix(testEnv);
+  const clientId = readTrimmed(env, `TRANSMIT_CLIENT_ID_${suffix}`);
+  const clientSecret = readTrimmed(env, `TRANSMIT_CLIENT_SECRET_${suffix}`);
 
-  if (!clientId) {
+  if (!clientId || !clientSecret) {
     throw new Error(
-      "Transmit client id is required (TRANSMIT_CLIENT_ID_TST or TRANSMIT_ADMIN_CLIENT_ID)",
+      `${suffix} Transmit credentials are not configured. Set TRANSMIT_CLIENT_ID_${suffix} and TRANSMIT_CLIENT_SECRET_${suffix}.`,
     );
   }
-  if (!clientSecret) {
+
+  const baseUrl =
+    readTrimmed(env, `TRANSMIT_API_BASE_URL_${suffix}`) ??
+    (testEnv === "dev" ? DEV_TRANSMIT_API_BASE_URL : undefined);
+
+  if (!baseUrl) {
     throw new Error(
-      "Transmit client secret is required (TRANSMIT_CLIENT_SECRET_TST or TRANSMIT_ADMIN_CLIENT_SECRET)",
+      `TRANSMIT_API_BASE_URL_${suffix} is required for ${suffix} Transmit.`,
     );
   }
 
   return {
     clientId,
     clientSecret,
-    baseUrl: normalizeBaseUrl(
-      env.TRANSMIT_ADMIN_API_BASE_URL ?? "https://api.transmitsecurity.io",
-    ),
+    baseUrl: normalizeBaseUrl(baseUrl),
   };
+}
+
+export type TransmitEnvAvailability = Record<TestEnv, boolean>;
+
+export function getTransmitEnvAvailability(
+  env: Env = process.env,
+): TransmitEnvAvailability {
+  return {
+    dev: isTransmitEnvConfigured("dev", env),
+    tst: isTransmitEnvConfigured("tst", env),
+  };
+}
+
+function isTransmitEnvConfigured(testEnv: TestEnv, env: Env): boolean {
+  try {
+    resolveTransmitAdminCredentials(testEnv, env);
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 export type TransmitAdminApi = {
@@ -147,9 +179,14 @@ export type TransmitAdminApi = {
   removeUserFromApp: (userId: string) => Promise<void>;
 };
 
-export function createTransmitAdminApi(env: Env = process.env): TransmitAdminApi {
-  const { clientId, clientSecret, baseUrl } =
-    resolveTransmitAdminCredentials(env);
+export function createTransmitAdminApi(
+  testEnv: TestEnv,
+  env: Env = process.env,
+): TransmitAdminApi {
+  const { clientId, clientSecret, baseUrl } = resolveTransmitAdminCredentials(
+    testEnv,
+    env,
+  );
 
   let cachedToken: { accessToken: string; expiresAt: number } | undefined;
 

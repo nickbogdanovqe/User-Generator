@@ -9,6 +9,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
+import type { TransmitEnvAvailability } from "@/lib/provision/transmit";
 import { isTestEnv, type TestEnv } from "@/lib/provision/types";
 
 const TEST_ENV_STORAGE_KEY = "user-generator.testEnv";
@@ -16,11 +17,18 @@ const TEST_ENV_STORAGE_KEY = "user-generator.testEnv";
 type EnvContextValue = {
   testEnv: TestEnv;
   setTestEnv: (next: TestEnv) => void;
+  availability: TransmitEnvAvailability;
 };
 
 const EnvContext = createContext<EnvContextValue | null>(null);
 
-export function EnvProvider({ children }: { children: ReactNode }) {
+export function EnvProvider({
+  children,
+  availability,
+}: {
+  children: ReactNode;
+  availability: TransmitEnvAvailability;
+}) {
   const [testEnv, setTestEnvState] = useState<TestEnv>("dev");
 
   useEffect(() => {
@@ -43,7 +51,10 @@ export function EnvProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  const value = useMemo(() => ({ testEnv, setTestEnv }), [testEnv, setTestEnv]);
+  const value = useMemo(
+    () => ({ testEnv, setTestEnv, availability }),
+    [testEnv, setTestEnv, availability],
+  );
 
   return <EnvContext.Provider value={value}>{children}</EnvContext.Provider>;
 }

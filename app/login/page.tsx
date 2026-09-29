@@ -55,7 +55,8 @@ export default async function LoginPage() {
           </h1>
           <p className="mt-5 max-w-lg text-[1.02rem] leading-relaxed text-[var(--muted)]">
             A secure console for creating, verifying, and retiring fresh Aurora
-            accounts across DEV and TST, mirroring the Maestro provisioning flow.
+            accounts. DEV and TST each use their own Transmit client; an env
+            without credentials stays marked unavailable.
           </p>
 
           <ul className="mt-9 grid gap-3">

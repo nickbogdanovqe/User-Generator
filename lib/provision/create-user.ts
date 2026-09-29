@@ -82,13 +82,13 @@ export async function createFreshAuroraUser(
   testEnv: TestEnv,
   overrides: DraftOverrides = {},
 ): Promise<StoredUser> {
-  // Mirror Maestro linkTransmitAdminCredentialsFromTestEnv — shared DB +
-  // Transmit *_TST creds; TEST_ENV drives Transmit username/password-auth shape.
+  // TEST_ENV still tags the request shape (username on dev, omitted on tst).
+  // Transmit client id, secret, and base URL come from the matching env.
   process.env.TEST_ENV = testEnv;
 
   const draft = createFreshAuroraUserDraft(overrides);
   const digitalBanking = createDigitalBankingUsersApi();
-  const transmit = createTransmitAdminApi();
+  const transmit = createTransmitAdminApi(testEnv);
 
   let externalUserId: string | undefined;
 

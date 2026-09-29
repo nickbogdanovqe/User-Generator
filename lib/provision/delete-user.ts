@@ -17,7 +17,7 @@ export async function deleteFreshAuroraUser(user: StoredUser): Promise<{
   process.env.TEST_ENV = user.testEnv;
 
   const digitalBanking = createDigitalBankingUsersApi();
-  const transmit = createTransmitAdminApi();
+  const transmit = createTransmitAdminApi(user.testEnv);
   const warnings: string[] = [];
 
   try {

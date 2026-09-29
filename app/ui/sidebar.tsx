@@ -31,9 +31,17 @@ const NAV = [
   },
 ] as const;
 
-const ENVS: { value: TestEnv; label: string; hint: string }[] = [
-  { value: "dev", label: "DEV", hint: "Transmit username + password" },
-  { value: "tst", label: "TST", hint: "Username omitted on Transmit" },
+const ENVS: { value: TestEnv; label: string; readyHint: string }[] = [
+  {
+    value: "dev",
+    label: "DEV",
+    readyHint: "Transmit username + password",
+  },
+  {
+    value: "tst",
+    label: "TST",
+    readyHint: "Username omitted on Transmit",
+  },
 ];
 
 function Brand() {
@@ -51,36 +59,57 @@ function Brand() {
 }
 
 export function EnvSwitcher({ compact = false }: { compact?: boolean }) {
-  const { testEnv, setTestEnv } = useTestEnv();
+  const { testEnv, setTestEnv, availability } = useTestEnv();
   const active = ENVS.find((e) => e.value === testEnv) ?? ENVS[0];
+  const activeReady = availability[active.value];
 
   return (
     <div className={compact ? "" : "flex flex-col gap-2"}>
       <div className={`seg ${compact ? "" : "seg-fill"}`} role="group" aria-label="Environment">
-        {ENVS.map((env) => (
-          <button
-            key={env.value}
-            type="button"
-            onClick={() => setTestEnv(env.value)}
-            data-active={testEnv === env.value}
-            className="seg-btn"
-          >
-            <span
-              className={`h-1.5 w-1.5 rounded-full ${
-                testEnv === env.value
-                  ? env.value === "dev"
-                    ? "dot-dev"
-                    : "dot-tst"
-                  : "dot-idle"
-              }`}
-            />
-            {env.label}
-          </button>
-        ))}
+        {ENVS.map((env) => {
+          const ready = availability[env.value];
+          const selected = testEnv === env.value;
+          return (
+            <button
+              key={env.value}
+              type="button"
+              onClick={() => setTestEnv(env.value)}
+              data-active={selected}
+              data-unavailable={ready ? undefined : "true"}
+              className="seg-btn"
+              aria-label={`${env.label} ${ready ? "ready" : "unavailable"}`}
+            >
+              <span
+                className={`h-1.5 w-1.5 shrink-0 rounded-full ${
+                  !ready
+                    ? "dot-off"
+                    : selected
+                      ? env.value === "dev"
+                        ? "dot-dev"
+                        : "dot-tst"
+                      : "dot-idle"
+                }`}
+              />
+              <span className={compact ? "" : "flex flex-col items-start leading-none"}>
+                <span>{env.label}</span>
+                {compact ? null : (
+                  <span
+                    className={`mt-1 ${ready ? "env-status env-status-ok" : "env-status env-status-off"}`}
+                  >
+                    {ready ? "Ready" : "Unavailable"}
+                  </span>
+                )}
+              </span>
+            </button>
+          );
+        })}
       </div>
       {!compact ? (
         <p className="hint px-1">
-          <span className="text-[var(--text)]">{active.label}</span> · {active.hint}.
+          <span className="text-[var(--text)]">{active.label}</span>
+          {activeReady
+            ? ` · ${active.readyHint}.`
+            : " · Transmit credentials are not set, so provisioning is off."}{" "}
           Governs provisioning and the registry.
         </p>
       ) : null}

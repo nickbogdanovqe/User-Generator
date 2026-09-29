@@ -101,7 +101,8 @@ function Metric({
 }
 
 export function Dashboard({ initialUsers, listError }: Props) {
-  const { testEnv, setTestEnv } = useTestEnv();
+  const { testEnv, setTestEnv, availability } = useTestEnv();
+  const envReady = availability[testEnv];
   const [username, setUsername] = useState("");
   const [ecifId, setEcifId] = useState("");
   const [interposeId, setInterposeId] = useState("");
@@ -197,7 +198,7 @@ export function Dashboard({ initialUsers, listError }: Props) {
             <button
               type="button"
               onClick={onCreate}
-              disabled={isPending}
+              disabled={isPending || !envReady}
               className="btn-primary flex items-center gap-2 px-4 py-2.5 text-sm"
             >
               {creating ? (
@@ -205,7 +206,11 @@ export function Dashboard({ initialUsers, listError }: Props) {
               ) : (
                 <PlusIcon className="h-4 w-4" />
               )}
-              {creating ? `Provisioning in ${ENV}…` : `Provision user in ${ENV}`}
+              {creating
+                ? `Provisioning in ${ENV}…`
+                : envReady
+                  ? `Provision user in ${ENV}`
+                  : `${ENV} unavailable`}
             </button>
           </>
         }
@@ -228,18 +233,26 @@ export function Dashboard({ initialUsers, listError }: Props) {
         <Metric
           label="Stored in DEV"
           value={devCount}
-          hint="Transmit username + password auth"
+          hint={
+            availability.dev
+              ? "Ready · Transmit username + password"
+              : "Unavailable · set TRANSMIT_CLIENT_ID_DEV"
+          }
           icon={<UsersIcon className="h-4 w-4" />}
-          tone="icon-tile-ok"
+          tone={availability.dev ? "icon-tile-ok" : "icon-tile"}
           active={testEnv === "dev"}
           onClick={() => setTestEnv("dev")}
         />
         <Metric
           label="Stored in TST"
           value={tstCount}
-          hint="Username omitted on Transmit create"
+          hint={
+            availability.tst
+              ? "Ready · username omitted on Transmit"
+              : "Unavailable · TST Transmit is not configured"
+          }
           icon={<LayersIcon className="h-4 w-4" />}
-          tone="icon-tile-signal"
+          tone={availability.tst ? "icon-tile-signal" : "icon-tile"}
           active={testEnv === "tst"}
           onClick={() => setTestEnv("tst")}
         />
@@ -266,6 +279,27 @@ export function Dashboard({ initialUsers, listError }: Props) {
                 </h2>
                 <span className={envTagClass(testEnv)}>Targeting {ENV}</span>
               </div>
+              {!envReady ? (
+                <div className="banner banner-warn mt-3" role="status">
+                  <AlertIcon className="mt-0.5 h-4 w-4 shrink-0" />
+                  <span>
+                    {ENV} Transmit is unavailable, so provisioning and delete are
+                    off.
+                    {testEnv === "tst" && availability.dev
+                      ? " DEV is ready."
+                      : ""}{" "}
+                    Set{" "}
+                    <span className="mono">
+                      TRANSMIT_CLIENT_ID_{ENV}
+                    </span>{" "}
+                    and{" "}
+                    <span className="mono">
+                      TRANSMIT_CLIENT_SECRET_{ENV}
+                    </span>
+                    .
+                  </span>
+                </div>
+              ) : null}
               <p className="hint mt-1.5">
                 Username defaults to{" "}
                 <code className="mono rounded-md bg-[var(--bg-inset)] px-1.5 py-0.5 text-[0.72rem] font-semibold text-[var(--accent-strong)]">
@@ -342,11 +376,11 @@ export function Dashboard({ initialUsers, listError }: Props) {
             <button
               type="button"
               onClick={onCreate}
-              disabled={isPending}
+              disabled={isPending || !envReady}
               className="btn-primary flex items-center gap-2 px-4 py-2.5 text-sm"
             >
               {creating ? <Spinner className="h-4 w-4" /> : <PlusIcon className="h-4 w-4" />}
-              {creating ? "Provisioning…" : `Provision in ${ENV}`}
+              {creating ? "Provisioning…" : envReady ? `Provision in ${ENV}` : `${ENV} unavailable`}
             </button>
           </div>
 
@@ -495,7 +529,7 @@ export function Dashboard({ initialUsers, listError }: Props) {
                 <button
                   type="button"
                   onClick={() => onDelete(user)}
-                  disabled={isPending}
+                  disabled={isPending || !envReady}
                   className="btn-danger flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium"
                   aria-label={`Delete user ${user.username}`}
                 >
