@@ -91,7 +91,8 @@ function supportsTransmitPasswordAuth(testEnv: TestEnv): boolean {
   return testEnv !== "tst";
 }
 
-const DEV_TRANSMIT_API_BASE_URL = "https://api.transmitsecurity.io";
+/** DEV and TST are separate Transmit tenants on the same production US host. */
+const DEFAULT_TRANSMIT_API_BASE_URL = "https://api.transmitsecurity.io";
 
 function envSuffix(testEnv: TestEnv): "DEV" | "TST" {
   return testEnv === "dev" ? "DEV" : "TST";
@@ -103,8 +104,9 @@ function readTrimmed(env: Env, key: string): string | undefined {
 }
 
 /**
- * DEV and TST each use their own Transmit client. DEV defaults to the
- * First Horizon dev gateway; TST stays unconfigured until its vars are set.
+ * DEV and TST each use their own Transmit admin client (different tenants).
+ * These credentials are only needed to remove the Transmit user that login
+ * creates; provisioning itself runs against Digital Banking alone.
  */
 export function resolveTransmitAdminCredentials(
   testEnv: TestEnv,
@@ -126,13 +128,7 @@ export function resolveTransmitAdminCredentials(
 
   const baseUrl =
     readTrimmed(env, `TRANSMIT_API_BASE_URL_${suffix}`) ??
-    (testEnv === "dev" ? DEV_TRANSMIT_API_BASE_URL : undefined);
-
-  if (!baseUrl) {
-    throw new Error(
-      `TRANSMIT_API_BASE_URL_${suffix} is required for ${suffix} Transmit.`,
-    );
-  }
+    DEFAULT_TRANSMIT_API_BASE_URL;
 
   return {
     clientId,

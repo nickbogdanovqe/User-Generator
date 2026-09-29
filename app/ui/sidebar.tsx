@@ -77,7 +77,7 @@ export function EnvSwitcher({ compact = false }: { compact?: boolean }) {
               data-active={selected}
               data-unavailable={ready ? undefined : "true"}
               className="seg-btn"
-              aria-label={`${env.label} ${ready ? "ready" : "unavailable"}`}
+              aria-label={`${env.label} ${ready ? "ready" : "provision only, no Transmit cleanup"}`}
             >
               <span
                 className={`h-1.5 w-1.5 shrink-0 rounded-full ${
@@ -96,7 +96,7 @@ export function EnvSwitcher({ compact = false }: { compact?: boolean }) {
                   <span
                     className={`mt-1 ${ready ? "env-status env-status-ok" : "env-status env-status-off"}`}
                   >
-                    {ready ? "Ready" : "Unavailable"}
+                    {ready ? "Ready" : "Provision only"}
                   </span>
                 )}
               </span>

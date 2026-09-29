@@ -231,8 +231,8 @@ export function Dashboard({ initialUsers, listError }: Props) {
           value={devCount}
           hint={
             availability.dev
-              ? "SSO provision · login creates Transmit"
-              : "SSO provision works · Transmit cleanup not configured"
+              ? "Ready · login creates the Transmit user"
+              : "Provision only · Transmit cleanup not configured"
           }
           icon={<UsersIcon className="h-4 w-4" />}
           tone={availability.dev ? "icon-tile-ok" : "icon-tile"}
@@ -244,8 +244,8 @@ export function Dashboard({ initialUsers, listError }: Props) {
           value={tstCount}
           hint={
             availability.tst
-              ? "SSO provision · login creates Transmit"
-              : "SSO provision works · Transmit cleanup not configured"
+              ? "Ready · login creates the Transmit user"
+              : "Provision only · Transmit cleanup not configured"
           }
           icon={<LayersIcon className="h-4 w-4" />}
           tone={availability.tst ? "icon-tile-signal" : "icon-tile"}

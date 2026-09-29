@@ -12,7 +12,7 @@ All Digital Banking and Transmit secrets stay **server-side**. The browser only 
 
 - App-password gate with signed httpOnly session cookie (12h)
 - Light / dark theme (Appearance switcher in the sidebar and on the login page; persisted in local storage, applied before first paint so there is no flash)
-- Console UI with a left sidebar: navigation (Fresh users / External users) plus a global `dev` / `tst` environment switcher shared across every page (persisted in local storage; governs provisioning and the registry view). Provisioning writes a Digital Banking user. Login creates the Transmit user. Transmit admin credentials are optional and only used to delete that user later; an env without them shows **Unavailable** for cleanup, not for provision.
+- Console UI with a left sidebar: navigation (Fresh users / External users) plus a global `dev` / `tst` environment switcher shared across every page (persisted in local storage; governs provisioning and the registry view). Provisioning writes a Digital Banking user. Login creates the Transmit user. Transmit admin credentials are optional and only used to delete that user later; an env without them shows **Provision only**.
 - External users reference catalog with Retail / SMB / Comingled tabs, KPI summary cards, search, pod filter, and one-click copy
 - Optional username override (empty → random `mobileaurora_*`); optional ECIF ID / Interpose ID overrides (empty → seed defaults used by Maestro)
 - Persist created users in **private** Vercel Blob (`users/{env}/{username}.json`)
@@ -22,10 +22,11 @@ All Digital Banking and Transmit secrets stay **server-side**. The browser only 
 ### How `dev` vs `tst` works
 
 - **Digital Banking** credentials stay shared (`client_id`, `client_secret`, `x_api_key`).
-- **Transmit admin** credentials are optional, per env, and used only when deleting a user login has already created:
-  - `dev` → `TRANSMIT_CLIENT_ID_DEV` / `TRANSMIT_CLIENT_SECRET_DEV`, default base `https://api.transmitsecurity.io`
-  - `tst` → `TRANSMIT_CLIENT_ID_TST` / `TRANSMIT_CLIENT_SECRET_TST` / `TRANSMIT_API_BASE_URL_TST`
-- An env with those vars missing is marked **Unavailable** in the switcher. Provisioning still works. Delete skips Transmit cleanup and reports a warning.
+- **Provisioning** is identical for `dev` and `tst`: both write to the same Digital Banking API (`qa-api`). The DEV variables are enough to create users in either env.
+- **Transmit admin** credentials are optional, per env, and used only when deleting a user login has already created. DEV and TST are different Transmit tenants on the same host (`https://api.transmitsecurity.io`, the default base URL for both):
+  - `dev` → `TRANSMIT_CLIENT_ID_DEV` / `TRANSMIT_CLIENT_SECRET_DEV`
+  - `tst` → `TRANSMIT_CLIENT_ID_TST` / `TRANSMIT_CLIENT_SECRET_TST`
+- An env with those vars missing is marked **Provision only** in the switcher. Delete skips Transmit cleanup and reports a warning.
 - Created users are stored under `users/{dev|tst}/`. Login authenticates the Digital Banking password and creates the Transmit app user.
 
 ## Local development
@@ -56,12 +57,12 @@ openssl rand -base64 32
 | `client_id` | yes | Digital Banking OAuth client |
 | `client_secret` | yes | Digital Banking OAuth secret |
 | `x_api_key` | yes | Digital Banking API key (sent as `x-api-key` header) |
-| `TRANSMIT_CLIENT_ID_DEV` | no | Transmit admin client id for deleting the DEV user login creates. Missing → DEV cleanup shows Unavailable |
+| `TRANSMIT_CLIENT_ID_DEV` | no | Transmit admin client id (DEV tenant) for deleting the Transmit user login creates. Missing → DEV shows Provision only |
 | `TRANSMIT_CLIENT_SECRET_DEV` | no | Transmit admin client secret for DEV cleanup |
 | `TRANSMIT_API_BASE_URL_DEV` | no | Default `https://api.transmitsecurity.io` |
-| `TRANSMIT_CLIENT_ID_TST` | no | Transmit admin client id for TST cleanup. Missing → TST cleanup shows Unavailable |
+| `TRANSMIT_CLIENT_ID_TST` | no | Transmit admin client id (TST tenant) for cleanup. Missing → TST shows Provision only |
 | `TRANSMIT_CLIENT_SECRET_TST` | no | Transmit admin client secret for TST cleanup |
-| `TRANSMIT_API_BASE_URL_TST` | no | Required once TST admin credentials are set. No default |
+| `TRANSMIT_API_BASE_URL_TST` | no | Default `https://api.transmitsecurity.io` |
 | `BLOB_READ_WRITE_TOKEN` | yes | Vercel Blob read/write token |
 | `AUTH_DIGITAL_BANKING_API_BASE_URL` | no | Default `https://qa-api.firsthorizon.com` (shared) |
 
