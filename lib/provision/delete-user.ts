@@ -4,6 +4,7 @@ import {
 } from "@/lib/provision/digital-banking";
 import {
   createTransmitAdminApi,
+  getTransmitEnvAvailability,
   makeUserFreshForLoginByUsernameIfExists,
   removeUserFromAppByExternalUserIdIfExists,
 } from "@/lib/provision/transmit";
@@ -17,28 +18,34 @@ export async function deleteFreshAuroraUser(user: StoredUser): Promise<{
   process.env.TEST_ENV = user.testEnv;
 
   const digitalBanking = createDigitalBankingUsersApi();
-  const transmit = createTransmitAdminApi(user.testEnv);
   const warnings: string[] = [];
 
-  try {
-    await removeUserFromAppByExternalUserIdIfExists(
-      transmit,
-      user.externalUserId,
-    );
-  } catch (error) {
+  if (!getTransmitEnvAvailability()[user.testEnv]) {
     warnings.push(
-      error instanceof Error ? error.message : "Transmit cleanup by id failed",
+      "Transmit credentials are not set, so the login-created Transmit user was not removed.",
     );
-  }
+  } else {
+    const transmit = createTransmitAdminApi(user.testEnv);
+    try {
+      await removeUserFromAppByExternalUserIdIfExists(
+        transmit,
+        user.externalUserId,
+      );
+    } catch (error) {
+      warnings.push(
+        error instanceof Error ? error.message : "Transmit cleanup by id failed",
+      );
+    }
 
-  try {
-    await makeUserFreshForLoginByUsernameIfExists(transmit, user.username);
-  } catch (error) {
-    warnings.push(
-      error instanceof Error
-        ? error.message
-        : "Transmit cleanup by username failed",
-    );
+    try {
+      await makeUserFreshForLoginByUsernameIfExists(transmit, user.username);
+    } catch (error) {
+      warnings.push(
+        error instanceof Error
+          ? error.message
+          : "Transmit cleanup by username failed",
+      );
+    }
   }
 
   try {

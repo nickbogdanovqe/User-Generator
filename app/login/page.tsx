@@ -15,7 +15,7 @@ const FEATURES = [
   {
     Icon: SparkIcon,
     title: "Fresh Aurora users in one click",
-    body: "Provisions Digital Banking + Transmit, applies migration flags, and verifies login readiness.",
+    body: "Provisions a Digital Banking user and Aurora flags. Login creates the Transmit user.",
   },
   {
     Icon: LayersIcon,
@@ -55,8 +55,9 @@ export default async function LoginPage() {
           </h1>
           <p className="mt-5 max-w-lg text-[1.02rem] leading-relaxed text-[var(--muted)]">
             A secure console for creating, verifying, and retiring fresh Aurora
-            accounts. DEV and TST each use their own Transmit client; an env
-            without credentials stays marked unavailable.
+            accounts. Provisioning writes the Digital Banking user. Login
+            creates the Transmit user. Transmit admin credentials are only
+            needed to delete that user later.
           </p>
 
           <ul className="mt-9 grid gap-3">

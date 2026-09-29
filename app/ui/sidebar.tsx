@@ -35,12 +35,12 @@ const ENVS: { value: TestEnv; label: string; readyHint: string }[] = [
   {
     value: "dev",
     label: "DEV",
-    readyHint: "Transmit username + password",
+    readyHint: "SSO user · login creates Transmit",
   },
   {
     value: "tst",
     label: "TST",
-    readyHint: "Username omitted on Transmit",
+    readyHint: "SSO user · login creates Transmit",
   },
 ];
 
@@ -109,7 +109,7 @@ export function EnvSwitcher({ compact = false }: { compact?: boolean }) {
           <span className="text-[var(--text)]">{active.label}</span>
           {activeReady
             ? ` · ${active.readyHint}.`
-            : " · Transmit credentials are not set, so provisioning is off."}{" "}
+            : " · Transmit cleanup credentials are not set. Provisioning still works."}{" "}
           Governs provisioning and the registry.
         </p>
       ) : null}

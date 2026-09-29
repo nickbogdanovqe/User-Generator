@@ -188,7 +188,7 @@ export function Dashboard({ initialUsers, listError }: Props) {
       <PageHeader
         eyebrow="Fresh Aurora users"
         title="Provision & manage test users"
-        description="Create Digital Banking + Transmit users with Aurora migration flags, then keep credentials in a private registry. Secrets never leave the server."
+        description="Create a Digital Banking user with Aurora migration flags. Login creates the Transmit user. Credentials stay in a private registry and never leave the server."
         actions={
           <>
             <span className={envTagClass(testEnv)}>
@@ -198,7 +198,7 @@ export function Dashboard({ initialUsers, listError }: Props) {
             <button
               type="button"
               onClick={onCreate}
-              disabled={isPending || !envReady}
+              disabled={isPending}
               className="btn-primary flex items-center gap-2 px-4 py-2.5 text-sm"
             >
               {creating ? (
@@ -206,11 +206,7 @@ export function Dashboard({ initialUsers, listError }: Props) {
               ) : (
                 <PlusIcon className="h-4 w-4" />
               )}
-              {creating
-                ? `Provisioning in ${ENV}…`
-                : envReady
-                  ? `Provision user in ${ENV}`
-                  : `${ENV} unavailable`}
+              {creating ? `Provisioning in ${ENV}…` : `Provision user in ${ENV}`}
             </button>
           </>
         }
@@ -235,8 +231,8 @@ export function Dashboard({ initialUsers, listError }: Props) {
           value={devCount}
           hint={
             availability.dev
-              ? "Ready · Transmit username + password"
-              : "Unavailable · set TRANSMIT_CLIENT_ID_DEV"
+              ? "SSO provision · login creates Transmit"
+              : "SSO provision works · Transmit cleanup not configured"
           }
           icon={<UsersIcon className="h-4 w-4" />}
           tone={availability.dev ? "icon-tile-ok" : "icon-tile"}
@@ -248,8 +244,8 @@ export function Dashboard({ initialUsers, listError }: Props) {
           value={tstCount}
           hint={
             availability.tst
-              ? "Ready · username omitted on Transmit"
-              : "Unavailable · TST Transmit is not configured"
+              ? "SSO provision · login creates Transmit"
+              : "SSO provision works · Transmit cleanup not configured"
           }
           icon={<LayersIcon className="h-4 w-4" />}
           tone={availability.tst ? "icon-tile-signal" : "icon-tile"}
@@ -283,20 +279,12 @@ export function Dashboard({ initialUsers, listError }: Props) {
                 <div className="banner banner-warn mt-3" role="status">
                   <AlertIcon className="mt-0.5 h-4 w-4 shrink-0" />
                   <span>
-                    {ENV} Transmit is unavailable, so provisioning and delete are
-                    off.
-                    {testEnv === "tst" && availability.dev
-                      ? " DEV is ready."
-                      : ""}{" "}
-                    Set{" "}
-                    <span className="mono">
-                      TRANSMIT_CLIENT_ID_{ENV}
-                    </span>{" "}
-                    and{" "}
-                    <span className="mono">
-                      TRANSMIT_CLIENT_SECRET_{ENV}
-                    </span>
-                    .
+                    {ENV} Transmit cleanup credentials are not set. Provisioning
+                    still works. Delete will not remove the Transmit user that
+                    login creates until{" "}
+                    <span className="mono">TRANSMIT_CLIENT_ID_{ENV}</span> and{" "}
+                    <span className="mono">TRANSMIT_CLIENT_SECRET_{ENV}</span>{" "}
+                    are set.
                   </span>
                 </div>
               ) : null}
@@ -376,11 +364,11 @@ export function Dashboard({ initialUsers, listError }: Props) {
             <button
               type="button"
               onClick={onCreate}
-              disabled={isPending || !envReady}
+              disabled={isPending}
               className="btn-primary flex items-center gap-2 px-4 py-2.5 text-sm"
             >
               {creating ? <Spinner className="h-4 w-4" /> : <PlusIcon className="h-4 w-4" />}
-              {creating ? "Provisioning…" : envReady ? `Provision in ${ENV}` : `${ENV} unavailable`}
+              {creating ? "Provisioning…" : `Provision in ${ENV}`}
             </button>
           </div>
 
@@ -529,7 +517,7 @@ export function Dashboard({ initialUsers, listError }: Props) {
                 <button
                   type="button"
                   onClick={() => onDelete(user)}
-                  disabled={isPending || !envReady}
+                  disabled={isPending}
                   className="btn-danger flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium"
                   aria-label={`Delete user ${user.username}`}
                 >

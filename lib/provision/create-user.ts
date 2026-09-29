@@ -9,9 +9,8 @@ import {
 } from "@/lib/provision/draft";
 import {
   createTransmitAdminApi,
-  createTransmitOtpUser,
+  getTransmitEnvAvailability,
   removeUserFromAppByExternalUserIdIfExists,
-  type TransmitAdminApi,
 } from "@/lib/provision/transmit";
 import type { StoredUser, TestEnv } from "@/lib/provision/types";
 import { saveStoredUser } from "@/lib/blob/users";
@@ -73,25 +72,13 @@ function assertProvisionedProfile(
   }
 }
 
-async function assertTransmitLoginReady(
-  transmit: TransmitAdminApi,
-  input: { username: string; externalUserId: string; testEnv: TestEnv },
+async function removeLoginCreatedTransmitUser(
+  testEnv: TestEnv,
+  externalUserId: string,
 ): Promise<void> {
-  const byExternal = await transmit.getUserByExternalUserId(
-    input.externalUserId,
-  );
-  if (!byExternal.user_id) {
-    throw new Error("Transmit user missing after create");
-  }
-
-  if (input.testEnv === "dev") {
-    const byUsername = await transmit.getUserByUsername(input.username);
-    if (byUsername.user_id !== byExternal.user_id) {
-      throw new Error(
-        "Transmit username lookup did not match external_user_id after create",
-      );
-    }
-  }
+  if (!getTransmitEnvAvailability()[testEnv]) return;
+  const transmit = createTransmitAdminApi(testEnv);
+  await removeUserFromAppByExternalUserIdIfExists(transmit, externalUserId);
 }
 
 export async function createFreshAuroraUser(
@@ -99,12 +86,12 @@ export async function createFreshAuroraUser(
   overrides: DraftOverrides = {},
 ): Promise<StoredUser> {
   // TEST_ENV still tags the request shape (username on dev, omitted on tst).
-  // Transmit client id, secret, and base URL come from the matching env.
+  // Login authenticates this password against Digital Banking and creates the
+  // Transmit app user itself.
   process.env.TEST_ENV = testEnv;
 
   const draft = createFreshAuroraUserDraft(overrides);
   const digitalBanking = createDigitalBankingUsersApi();
-  const transmit = createTransmitAdminApi(testEnv);
 
   let externalUserId: string | undefined;
 
@@ -120,17 +107,6 @@ export async function createFreshAuroraUser(
     });
     externalUserId = created.guid;
 
-    await createTransmitOtpUser(transmit, {
-      username: draft.username,
-      password: draft.password,
-      email: draft.email,
-      firstName: draft.firstName,
-      lastName: draft.lastName,
-      primaryPhoneNumber: draft.primaryPhoneNumber,
-      externalUserId,
-      testEnv,
-    });
-
     await digitalBanking.recoverUser(externalUserId);
     await digitalBanking.bindEcifId(externalUserId, {
       interposeId: draft.interpose,
@@ -142,11 +118,6 @@ export async function createFreshAuroraUser(
     assertProvisionedProfile(profile, {
       interpose: draft.interpose,
       ecifId: draft.ecifId,
-    });
-    await assertTransmitLoginReady(transmit, {
-      username: draft.username,
-      externalUserId,
-      testEnv,
     });
 
     const stored: StoredUser = {
@@ -163,10 +134,7 @@ export async function createFreshAuroraUser(
   } catch (error) {
     if (externalUserId) {
       try {
-        await removeUserFromAppByExternalUserIdIfExists(
-          transmit,
-          externalUserId,
-        );
+        await removeLoginCreatedTransmitUser(testEnv, externalUserId);
       } catch {
         // best-effort cleanup
       }

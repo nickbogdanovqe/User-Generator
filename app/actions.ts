@@ -15,12 +15,7 @@ import {
   normalizeOptionalFhnId,
   normalizeOptionalUsername,
 } from "@/lib/provision/draft";
-import { getTransmitEnvAvailability } from "@/lib/provision/transmit";
-import {
-  isTestEnv,
-  type StoredUser,
-  type TestEnv,
-} from "@/lib/provision/types";
+import { isTestEnv, type StoredUser } from "@/lib/provision/types";
 
 export type ActionResult<T> =
   | { ok: true; data: T }
@@ -101,8 +96,6 @@ export async function createUserAction(
     if (!isTestEnv(input.testEnv)) {
       return { ok: false, error: 'Environment must be "dev" or "tst"' };
     }
-    const unavailable = transmitUnavailableError(input.testEnv);
-    if (unavailable) return unavailable;
 
     let username: string | undefined;
     let ecifId: string | undefined;
@@ -144,8 +137,6 @@ export async function deleteUserAction(
     if (!user.username || !user.externalUserId || !isTestEnv(user.testEnv)) {
       return { ok: false, error: "Invalid user payload" };
     }
-    const unavailable = transmitUnavailableError(user.testEnv);
-    if (unavailable) return unavailable;
     const result = await deleteFreshAuroraUser(user);
     return { ok: true, data: result };
   } catch (error) {
@@ -157,17 +148,6 @@ export async function deleteUserAction(
           : "Failed to delete user",
     };
   }
-}
-
-function transmitUnavailableError(
-  testEnv: TestEnv,
-): ActionResult<never> | null {
-  if (getTransmitEnvAvailability()[testEnv]) return null;
-  const suffix = testEnv === "dev" ? "DEV" : "TST";
-  return {
-    ok: false,
-    error: `${suffix} Transmit is unavailable. Set TRANSMIT_CLIENT_ID_${suffix} and TRANSMIT_CLIENT_SECRET_${suffix}.`,
-  };
 }
 
 function sanitizeError(message: string): string {
