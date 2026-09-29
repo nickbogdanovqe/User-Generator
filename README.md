@@ -11,7 +11,8 @@ All Digital Banking and Transmit secrets stay **server-side**. The browser only 
 ## Features
 
 - App-password gate with signed httpOnly session cookie (12h)
-- Dark console UI with a left sidebar: navigation (Fresh users / External users) plus a global `dev` / `tst` environment switcher shared across every page (persisted in local storage; governs provisioning and the registry view)
+- Light / dark / system theme (Appearance switcher in the sidebar and on the login page; persisted in local storage, applied before first paint so there is no flash)
+- Console UI with a left sidebar: navigation (Fresh users / External users) plus a global `dev` / `tst` environment switcher shared across every page (persisted in local storage; governs provisioning and the registry view)
 - External users reference catalog with Retail / SMB / Comingled tabs, KPI summary cards, search, pod filter, and one-click copy
 - Optional username override (empty → random `mobileaurora_*`); optional ECIF ID / Interpose ID overrides (empty → seed defaults used by Maestro)
 - Persist created users in **private** Vercel Blob (`users/{env}/{username}.json`)

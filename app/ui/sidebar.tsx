@@ -13,6 +13,7 @@ import {
   ShieldIcon,
   SparkIcon,
 } from "@/app/ui/icons";
+import { ThemeToggle } from "@/app/ui/theme-toggle";
 import type { TestEnv } from "@/lib/provision/types";
 
 const NAV = [
@@ -130,6 +131,11 @@ function SidebarBody({ onNavigate }: { onNavigate?: () => void }) {
         <EnvSwitcher />
       </section>
 
+      <section className="flex flex-col gap-2">
+        <p className="eyebrow px-1">Appearance</p>
+        <ThemeToggle />
+      </section>
+
       <div className="mt-auto flex flex-col gap-3">
         <div className="inset flex items-center gap-2.5 px-3 py-2.5">
           <span className="icon-tile icon-tile-accent h-7 w-7 rounded-lg">
@@ -191,7 +197,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           <span className="brand-glyph h-7 w-7 rounded-lg" aria-hidden />
           <span className="brand-mark text-base">User Generator</span>
         </div>
-        <EnvSwitcher compact />
+        <div className="flex items-center gap-2">
+          <EnvSwitcher compact />
+          <ThemeToggle compact />
+        </div>
       </div>
 
       {open ? (

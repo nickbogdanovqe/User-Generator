@@ -206,6 +206,32 @@ export function ClockIcon(props: IconProps) {
   );
 }
 
+export function SunIcon(props: IconProps) {
+  return (
+    <svg {...base} {...props}>
+      <circle cx="12" cy="12" r="3.6" />
+      <path d="M12 3v2.2M12 18.8V21M3 12h2.2M18.8 12H21M5.6 5.6l1.6 1.6M16.8 16.8l1.6 1.6M5.6 18.4l1.6-1.6M16.8 7.2l1.6-1.6" />
+    </svg>
+  );
+}
+
+export function MoonIcon(props: IconProps) {
+  return (
+    <svg {...base} {...props}>
+      <path d="M20 14.2A8 8 0 1 1 9.8 4a6.4 6.4 0 0 0 10.2 10.2Z" />
+    </svg>
+  );
+}
+
+export function MonitorIcon(props: IconProps) {
+  return (
+    <svg {...base} {...props}>
+      <rect x="3" y="4.5" width="18" height="12" rx="2.5" />
+      <path d="M8.5 20h7M12 16.5V20" />
+    </svg>
+  );
+}
+
 export function Spinner({ className = "", ...props }: IconProps) {
   return (
     <svg className={`animate-spin ${className}`} viewBox="0 0 24 24" fill="none" {...props}>

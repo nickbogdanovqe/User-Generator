@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { isAuthenticated } from "@/lib/auth/session";
 import { LayersIcon, ShieldIcon, SparkIcon } from "@/app/ui/icons";
+import { ThemeToggle } from "@/app/ui/theme-toggle";
 import { LoginForm } from "./login-form";
 
 export const dynamic = "force-dynamic";
@@ -30,6 +31,9 @@ export default async function LoginPage() {
 
   return (
     <main className="relative flex flex-1 items-center justify-center px-6 py-14">
+      <div className="absolute right-5 top-5 animate-fade-up">
+        <ThemeToggle compact />
+      </div>
       <div className="grid w-full max-w-5xl items-center gap-10 lg:grid-cols-[1.1fr_minmax(0,26rem)]">
         <section className="animate-fade-up">
           <div className="flex items-center gap-3">

@@ -13,9 +13,8 @@ export function CopyButton({ value, label }: { value: string; label: string }) {
         setCopied(true);
         window.setTimeout(() => setCopied(false), 1200);
       }}
-      className={`btn-ghost mono shrink-0 px-2.5 py-1 text-xs ${
-        copied ? "!border-[rgba(52,211,153,0.5)] !text-[#6ee7b7]" : ""
-      }`}
+      data-copied={copied}
+      className="btn-ghost mono shrink-0 px-2.5 py-1 text-xs"
       aria-label={`Copy ${label}`}
     >
       {copied ? "Copied" : "Copy"}

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { IBM_Plex_Mono, Space_Grotesk, Syne } from "next/font/google";
+import { THEME_BOOTSTRAP_SCRIPT } from "@/app/ui/theme-config";
 import "./globals.css";
 
 const spaceGrotesk = Space_Grotesk({
@@ -32,8 +33,14 @@ export default function RootLayout({
   return (
     <html
       lang="en"
+      data-theme="dark"
+      suppressHydrationWarning
       className={`${spaceGrotesk.variable} ${syne.variable} ${plexMono.variable} h-full antialiased`}
     >
+      <head>
+        {/* Applies the persisted / system theme before first paint. */}
+        <script dangerouslySetInnerHTML={{ __html: THEME_BOOTSTRAP_SCRIPT }} />
+      </head>
       <body className="min-h-full flex flex-col">{children}</body>
     </html>
   );

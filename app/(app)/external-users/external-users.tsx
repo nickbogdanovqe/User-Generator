@@ -4,10 +4,8 @@ import { useMemo, useState } from "react";
 import { envTagClass, useTestEnv } from "@/app/ui/env-context";
 import {
   BuildingIcon,
-  CardIcon,
   CheckIcon,
   CopyIcon,
-  LayersIcon,
   PersonIcon,
   SearchIcon,
   UsersIcon,
@@ -16,7 +14,6 @@ import { PageHeader } from "@/app/ui/page-header";
 import {
   countExternalProfiles,
   EXTERNAL_PODS,
-  type ExternalAccount,
   type ExternalProfile,
   type ExternalUserGroup,
 } from "@/lib/external-users/catalog";
@@ -28,6 +25,8 @@ type Props = {
 type SegmentFilter = "all" | "retail" | "smb" | "comingled";
 type Category = Exclude<SegmentFilter, "all">;
 
+const CATEGORY_ORDER: Category[] = ["retail", "smb", "comingled"];
+
 const ALL = "all";
 
 const CATEGORY_META: Record<
@@ -38,19 +37,19 @@ const CATEGORY_META: Record<
     label: "Retail",
     tag: "tag-retail",
     tile: "icon-tile-ok",
-    dot: "bg-[#34d399]",
+    dot: "bg-[var(--ok)]",
   },
   smb: {
     label: "SMB Business",
     tag: "tag-smb",
     tile: "icon-tile-smb",
-    dot: "bg-[#818cf8]",
+    dot: "bg-[var(--smb)]",
   },
   comingled: {
     label: "Comingled",
     tag: "tag-comingled",
     tile: "icon-tile-comingled",
-    dot: "bg-[#c084fc]",
+    dot: "bg-[var(--comingled)]",
   },
 };
 
@@ -61,6 +60,10 @@ function getCategory(segment: string): Category {
   return "smb";
 }
 
+function displayName(profile: ExternalProfile): string {
+  return profile.fullName ?? profile.username;
+}
+
 function getInitials(name: string): string {
   const parts = name.trim().split(/\s+/);
   if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
@@ -69,16 +72,15 @@ function getInitials(name: string): string {
 
 function matchesQuery(profile: ExternalProfile, group: ExternalUserGroup, query: string): boolean {
   const haystack = [
-    profile.fullName,
+    profile.fullName ?? "",
     profile.username,
-    profile.olbNumber,
-    profile.guid,
-    profile.partyId,
-    profile.taxId,
+    profile.olbNumber ?? "",
+    profile.guid ?? "",
+    profile.partyId ?? "",
+    profile.taxId ?? "",
     group.pod,
     group.segment,
     group.purpose,
-    ...profile.accounts.flatMap((a) => [a.label, a.number, a.note ?? ""]),
   ]
     .join(" ")
     .toLowerCase();
@@ -118,7 +120,7 @@ function CopyTile({
         <span className="label">{label}</span>
         <span
           className={`text-[0.62rem] font-medium transition ${
-            copied ? "text-[#6ee7b7]" : "text-[var(--muted-2)] opacity-0 group-hover:opacity-100"
+            copied ? "text-[var(--ok-text)]" : "text-[var(--muted-2)] opacity-0 group-hover:opacity-100"
           }`}
         >
           {copied ? "Copied" : "Copy"}
@@ -135,74 +137,47 @@ function CopyTile({
   );
 }
 
-function AccountTile({ account }: { account: ExternalAccount }) {
-  const [copied, copy] = useCopy();
-  return (
-    <button
-      type="button"
-      onClick={() => copy(account.number)}
-      data-copied={copied}
-      className="copy-tile group flex-row items-center justify-between"
-      title={`Copy account number ${account.number}`}
-      aria-label={`Copy account ${account.label} ${account.number}`}
-    >
-      <span className="flex min-w-0 items-center gap-2.5">
-        <span className="icon-tile h-7 w-7 rounded-lg">
-          <CardIcon className="h-3.5 w-3.5" />
-        </span>
-        <span className="min-w-0">
-          <span className="flex flex-wrap items-center gap-1.5">
-            <span className="truncate text-xs font-medium text-[var(--text)]">{account.label}</span>
-            {account.note ? <span className="tag tag-note">{account.note}</span> : null}
-          </span>
-          <span className="mono block text-xs font-semibold text-[var(--accent-strong)]">
-            {account.number}
-          </span>
-        </span>
-      </span>
-      <span
-        className={`shrink-0 text-[0.62rem] font-medium transition ${
-          copied ? "text-[#6ee7b7]" : "text-[var(--muted-2)] opacity-0 group-hover:opacity-100"
-        }`}
-      >
-        {copied ? "Copied" : "Copy"}
-      </span>
-    </button>
-  );
+function profileCopyLines(profile: ExternalProfile, group: ExternalUserGroup): string[] {
+  const lines = [
+    profile.fullName ? `Name: ${profile.fullName}` : null,
+    `Segment: ${group.segment} · Pod: ${group.pod}`,
+    `Username: ${profile.username}`,
+    `Password: ${profile.password}`,
+    profile.olbNumber ? `OLB Number: ${profile.olbNumber}` : null,
+    profile.partyId ? `Party ID: ${profile.partyId}` : null,
+    profile.taxId ? `Tax ID: ${profile.taxId}` : null,
+    profile.guid ? `GUID: ${profile.guid}` : null,
+  ];
+  return lines.filter((line): line is string => line !== null);
+}
+
+function identityFields(
+  profile: ExternalProfile,
+): { label: string; value: string; truncate?: boolean }[] {
+  const fields: { label: string; value: string; truncate?: boolean }[] = [];
+  if (profile.olbNumber) fields.push({ label: "OLB number", value: profile.olbNumber });
+  if (profile.partyId) fields.push({ label: "Party ID", value: profile.partyId });
+  if (profile.taxId) fields.push({ label: "Tax ID / SSN", value: profile.taxId });
+  if (profile.guid) fields.push({ label: "GUID", value: profile.guid, truncate: true });
+  return fields;
 }
 
 function ProfileCard({ profile, group }: { profile: ExternalProfile; group: ExternalUserGroup }) {
   const [copiedAll, copy] = useCopy();
   const category = getCategory(group.segment);
   const meta = CATEGORY_META[category];
-
-  const onCopyAll = () =>
-    copy(
-      [
-        `Name: ${profile.fullName}`,
-        `Segment: ${group.segment} · Pod: ${group.pod}`,
-        `Username: ${profile.username}`,
-        `Password: ${profile.password}`,
-        `OLB Number: ${profile.olbNumber}`,
-        `Party ID: ${profile.partyId}`,
-        `Tax ID: ${profile.taxId}`,
-        `GUID: ${profile.guid}`,
-        `Accounts (${profile.accounts.length}):`,
-        ...profile.accounts.map(
-          (a) => `  - ${a.label}: ${a.number}${a.note ? ` (${a.note})` : ""}`,
-        ),
-      ].join("\n"),
-    );
+  const name = displayName(profile);
+  const identity = identityFields(profile);
 
   return (
     <article className="panel flex flex-col gap-4 p-5">
       <div className="flex flex-wrap items-start justify-between gap-3 border-b border-[var(--stroke)] pb-4">
         <div className="flex items-start gap-3.5">
-          <div className={`avatar-badge ${meta.tag}`}>{getInitials(profile.fullName)}</div>
+          <div className={`avatar-badge ${meta.tag}`}>{getInitials(name)}</div>
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2">
               <h3 className="text-base font-semibold tracking-tight text-[var(--text-strong)]">
-                {profile.fullName}
+                {name}
               </h3>
               <span className={`tag ${meta.tag}`}>{group.segment}</span>
               <span className="tag tag-neutral">{group.pod}</span>
@@ -212,12 +187,12 @@ function ProfileCard({ profile, group }: { profile: ExternalProfile; group: Exte
         </div>
         <button
           type="button"
-          onClick={onCopyAll}
+          onClick={() => copy(profileCopyLines(profile, group).join("\n"))}
           className="btn-ghost flex shrink-0 items-center gap-1.5 px-3 py-1.5 text-xs font-medium"
-          aria-label={`Copy complete profile for ${profile.fullName}`}
+          aria-label={`Copy complete profile for ${name}`}
         >
           {copiedAll ? (
-            <CheckIcon className="h-3.5 w-3.5 text-[#6ee7b7]" />
+            <CheckIcon className="h-3.5 w-3.5 text-[var(--ok-text)]" />
           ) : (
             <CopyIcon className="h-3.5 w-3.5" />
           )}
@@ -231,24 +206,14 @@ function ProfileCard({ profile, group }: { profile: ExternalProfile; group: Exte
       </div>
 
       <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
-        <CopyTile label="OLB number" value={profile.olbNumber} />
-        <CopyTile label="Party ID" value={profile.partyId} />
-        <CopyTile label="Tax ID / SSN" value={profile.taxId} />
-        <CopyTile label="GUID" value={profile.guid} truncate />
-      </div>
-
-      <div>
-        <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-          <span className="label">
-            Linked accounts &amp; cards ({profile.accounts.length})
-          </span>
-          <span className="hint">Required balance: {group.requiredBalance}</span>
-        </div>
-        <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
-          {profile.accounts.map((account) => (
-            <AccountTile key={`${account.label}-${account.number}`} account={account} />
-          ))}
-        </div>
+        {identity.map((field) => (
+          <CopyTile
+            key={field.label}
+            label={field.label}
+            value={field.value}
+            truncate={field.truncate}
+          />
+        ))}
       </div>
     </article>
   );
@@ -266,12 +231,11 @@ export function ExternalUsers({ groups }: Props) {
   );
 
   const metrics = useMemo(() => {
-    const m = { total: 0, retail: 0, smb: 0, comingled: 0, accounts: 0 };
+    const m = { total: 0, retail: 0, smb: 0, comingled: 0 };
     for (const g of envGroups) {
       const n = g.profiles.length;
       m.total += n;
       m[getCategory(g.segment)] += n;
-      for (const p of g.profiles) m.accounts += p.accounts.length;
     }
     return m;
   }, [envGroups]);
@@ -287,6 +251,15 @@ export function ExternalUsers({ groups }: Props) {
       }))
       .filter((g) => g.profiles.length > 0);
   }, [envGroups, segmentTab, pod, query]);
+
+  const sections = useMemo(
+    () =>
+      CATEGORY_ORDER.map((category) => ({
+        category,
+        groups: visibleGroups.filter((group) => getCategory(group.segment) === category),
+      })).filter((section) => section.groups.length > 0),
+    [visibleGroups],
+  );
 
   const visibleCount = countExternalProfiles(visibleGroups);
   const isFiltered = query.trim() !== "" || pod !== ALL || segmentTab !== "all";
@@ -313,7 +286,7 @@ export function ExternalUsers({ groups }: Props) {
       <PageHeader
         eyebrow="External test profiles"
         title="Reference catalog"
-        description="Pre-provisioned Retail and SMB profiles with linked accounts and pod capabilities. Read-only: nothing here is created or deleted by User Generator."
+        description="Pre-provisioned Retail and SMB profiles. Read-only: nothing here is created or deleted by User Generator."
         actions={
           <span className={envTagClass(testEnv)}>
             <span className="h-1.5 w-1.5 rounded-full bg-current" />
@@ -323,7 +296,7 @@ export function ExternalUsers({ groups }: Props) {
       />
 
       <section
-        className="animate-fade-up grid gap-3 sm:grid-cols-2 xl:grid-cols-4"
+        className="animate-fade-up grid gap-3 sm:grid-cols-3"
         style={{ animationDelay: "60ms" }}
       >
         <button
@@ -349,7 +322,7 @@ export function ExternalUsers({ groups }: Props) {
           className="metric-card cursor-pointer text-left"
         >
           <div className="flex items-center justify-between">
-            <span className="label text-[#6ee7b7]">Retail</span>
+            <span className="label text-[var(--ok-text)]">Retail</span>
             <span className="icon-tile icon-tile-ok">
               <PersonIcon className="h-4 w-4" />
             </span>
@@ -365,7 +338,7 @@ export function ExternalUsers({ groups }: Props) {
           className="metric-card cursor-pointer text-left"
         >
           <div className="flex items-center justify-between">
-            <span className="label text-[#a5b4fc]">SMB Business</span>
+            <span className="label text-[var(--smb-text)]">SMB Business</span>
             <span className="icon-tile icon-tile-smb">
               <BuildingIcon className="h-4 w-4" />
             </span>
@@ -373,17 +346,6 @@ export function ExternalUsers({ groups }: Props) {
           <p className="metric-value mt-3">{metrics.smb}</p>
           <p className="mt-1.5 text-xs text-[var(--muted)]">Commercial DDA, Zelle, Direct Pay</p>
         </button>
-
-        <div className="metric-card">
-          <div className="flex items-center justify-between">
-            <span className="label">Linked accounts</span>
-            <span className="icon-tile icon-tile-signal">
-              <LayersIcon className="h-4 w-4" />
-            </span>
-          </div>
-          <p className="metric-value mt-3">{metrics.accounts}</p>
-          <p className="mt-1.5 text-xs text-[var(--muted)]">DDA, savings &amp; debit cards</p>
-        </div>
       </section>
 
       <section
@@ -404,7 +366,7 @@ export function ExternalUsers({ groups }: Props) {
               >
                 {tab.dot ? <span className={`h-1.5 w-1.5 rounded-full ${tab.dot}`} /> : null}
                 {tab.label}
-                <span className="mono rounded-full bg-[rgba(255,255,255,0.06)] px-1.5 text-[0.65rem] text-[var(--muted)]">
+                <span className="mono rounded-full bg-[var(--chip-bg)] px-1.5 text-[0.65rem] text-[var(--muted)]">
                   {tab.count}
                 </span>
               </button>
@@ -418,7 +380,7 @@ export function ExternalUsers({ groups }: Props) {
                 type="search"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                placeholder="Search name, username, OLB, GUID, account…"
+                placeholder="Search name, username, OLB, party ID, tax ID, GUID…"
                 className="field py-2 pl-9 pr-3 text-sm"
                 aria-label="Search external users"
                 autoComplete="off"
@@ -465,33 +427,44 @@ export function ExternalUsers({ groups }: Props) {
           </button>
         </div>
       ) : (
-        <div className="flex flex-col gap-6">
-          {visibleGroups.map((group, i) => {
-            const meta = CATEGORY_META[getCategory(group.segment)];
+        <div className="flex flex-col gap-10">
+          {sections.map((section) => {
+            const meta = CATEGORY_META[section.category];
+            const count = countExternalProfiles(section.groups);
             return (
-              <section
-                key={group.id}
-                className="animate-fade-up flex flex-col gap-3"
-                style={{ animationDelay: `${140 + i * 40}ms` }}
-              >
-                <div className="flex flex-wrap items-center gap-2.5 px-1">
-                  <span className={`h-2 w-2 rounded-full ${meta.dot}`} />
-                  <h2 className="text-sm font-semibold tracking-tight text-[var(--text-strong)]">
-                    {group.userProfile}
+              <section key={section.category} className="flex flex-col gap-6">
+                <header className="flex flex-wrap items-center gap-2.5 border-b border-[var(--stroke)] pb-3">
+                  <span className={`h-2.5 w-2.5 rounded-full ${meta.dot}`} />
+                  <h2 className="text-lg font-semibold tracking-tight text-[var(--text-strong)]">
+                    {meta.label}
                   </h2>
-                  <span className="tag tag-neutral">{group.pod}</span>
-                  <span className="hint">
-                    {group.qty} · {group.accountTypes}
+                  <span className={`tag ${meta.tag}`}>
+                    {count} {count === 1 ? "profile" : "profiles"}
                   </span>
-                  <span className="mono ml-auto text-xs text-[var(--muted)]">
-                    {group.profiles.length} {group.profiles.length === 1 ? "profile" : "profiles"}
-                  </span>
-                </div>
-                <div className="grid gap-4">
-                  {group.profiles.map((profile) => (
-                    <ProfileCard key={profile.username} profile={profile} group={group} />
-                  ))}
-                </div>
+                </header>
+                {section.groups.map((group, i) => (
+                  <div
+                    key={group.id}
+                    className="animate-fade-up flex flex-col gap-3"
+                    style={{ animationDelay: `${140 + i * 40}ms` }}
+                  >
+                    <div className="flex flex-wrap items-center gap-2.5 px-1">
+                      <h3 className="text-sm font-semibold tracking-tight text-[var(--text-strong)]">
+                        {group.userProfile}
+                      </h3>
+                      <span className="tag tag-neutral">{group.pod}</span>
+                      <span className="mono ml-auto text-xs text-[var(--muted)]">
+                        {group.profiles.length}{" "}
+                        {group.profiles.length === 1 ? "profile" : "profiles"}
+                      </span>
+                    </div>
+                    <div className="grid gap-4">
+                      {group.profiles.map((profile) => (
+                        <ProfileCard key={profile.username} profile={profile} group={group} />
+                      ))}
+                    </div>
+                  </div>
+                ))}
               </section>
             );
           })}

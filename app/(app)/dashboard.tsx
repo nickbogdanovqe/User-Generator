@@ -55,7 +55,7 @@ function CopyableUsername({ username }: { username: string }) {
       <span
         className={`rounded-md px-1.5 py-0.5 font-sans text-[0.62rem] font-medium uppercase tracking-wider transition ${
           copied
-            ? "bg-[var(--ok-soft)] text-[#6ee7b7]"
+            ? "bg-[var(--ok-soft)] text-[var(--ok-text)]"
             : "bg-[var(--bg-inset)] text-[var(--muted)] opacity-0 group-hover/btn:opacity-100"
         }`}
       >
@@ -464,7 +464,7 @@ export function Dashboard({ initialUsers, listError }: Props) {
             {filtered.map((user) => (
               <li
                 key={`${user.testEnv}-${user.username}`}
-                className="group flex flex-wrap items-center justify-between gap-3 rounded-xl px-3 py-3 transition hover:bg-[rgba(255,255,255,0.03)]"
+                className="group flex flex-wrap items-center justify-between gap-3 rounded-xl px-3 py-3 transition hover:bg-[var(--hover-wash)]"
               >
                 <div className="flex min-w-0 items-center gap-3">
                   <div

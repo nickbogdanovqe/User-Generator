@@ -12,20 +12,26 @@ export type ExternalAccount = {
 };
 
 export type ExternalProfile = {
-  fullName: string;
-  olbNumber: string;
-  guid: string;
-  partyId: string;
-  taxId: string;
+  /** Absent for reference logins that only have a username. */
+  fullName?: string;
+  olbNumber?: string;
+  guid?: string;
+  partyId?: string;
+  cif?: string;
+  taxId?: string;
   username: string;
   password: string;
+  interposeId?: string;
+  email?: string;
+  phone?: string;
   accounts: ExternalAccount[];
 };
 
 export type ExternalPod =
   | "Money Movement"
   | "Account Servicing"
-  | "Account Servicing (Comingled login)";
+  | "Account Servicing (Comingled login)"
+  | "Retail reference";
 
 export type ExternalUserGroup = {
   id: string;
@@ -273,6 +279,94 @@ export const EXTERNAL_USER_GROUPS: ExternalUserGroup[] = [
           { label: "Business checking", number: "100489967" },
           { label: "Checking", number: "220007411502" },
         ],
+      },
+    ],
+  },
+  {
+    id: "retail-reference",
+    testEnvs: ["dev", "tst"],
+    pod: "Retail reference",
+    userProfile: "Retail reference",
+    segment: "Retail",
+    accountTypes: "Checking, line of credit",
+    qty: "3 profiles",
+    requiredBalance: "n/a",
+    purpose: "Additional retail logins with interpose, CIF, email, and phone",
+    profiles: [
+      {
+        username: "kgbooher824",
+        password: SHARED_PASSWORD,
+        interposeId: "00001234562000217831",
+        guid: "e99c49b4-3666-3b41-b9e5-3a19fe475801",
+        taxId: "410177770",
+        cif: "100911401",
+        email: "kgbooher824@ftb.com",
+        phone: "(932) 424-2423",
+        accounts: [{ label: "Checking", number: "100041036" }],
+      },
+      {
+        username: "ednichols",
+        password: SHARED_PASSWORD,
+        interposeId: "00004451150818751082",
+        guid: "fa88d7b1-a6fa-3360-9f94-89cfafc56b41",
+        taxId: "428044227",
+        cif: "101562712",
+        email: "ednichols@ftb.com",
+        phone: "(901) 442-3234",
+        accounts: [
+          { label: "Checking", number: "2785517" },
+          { label: "Checking", number: "186530611" },
+          { label: "Checking", number: "100049749" },
+          { label: "Checking", number: "183262556" },
+        ],
+      },
+      {
+        username: "lamarjp",
+        password: SHARED_PASSWORD,
+        interposeId: "00001234578003601557",
+        guid: "4d2728d9-0bba-346b-bdf1-968fe7c86d6b",
+        taxId: "413843093",
+        cif: "101271600",
+        email: "lamarjp@ftb.com",
+        phone: "(901) 442-3432",
+        accounts: [
+          { label: "Checking", number: "188927978" },
+          { label: "Checking", number: "942292" },
+          { label: "Checking", number: "942276" },
+          { label: "Line of credit", number: "21000000801326" },
+          { label: "Checking", number: "100050893" },
+          { label: "Checking", number: "180048618" },
+          { label: "Checking", number: "184873543" },
+        ],
+      },
+    ],
+  },
+  {
+    id: "mmretail",
+    testEnvs: ["dev", "tst"],
+    pod: "Money Movement",
+    userProfile: "MM Retail",
+    segment: "Retail",
+    accountTypes: "Plaid-linked external account",
+    qty: "2 profiles",
+    requiredBalance: "n/a",
+    purpose: "Retail logins used for external-transfer review in DEV and TST.",
+    profiles: [
+      {
+        username: "mmretail_01",
+        password: SHARED_PASSWORD,
+        guid: "3238ab37-dd7d-3a62-a96a-388fd2dffe06",
+        partyId: "998189583",
+        interposeId: "00001234578000089509",
+        accounts: [],
+      },
+      {
+        username: "mmretail_02",
+        password: SHARED_PASSWORD,
+        guid: "a58d7234-da03-3dc1-8647-262fd71cfbdc",
+        partyId: "998189584",
+        interposeId: "00001234578000089525",
+        accounts: [],
       },
     ],
   },
