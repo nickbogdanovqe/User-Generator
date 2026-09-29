@@ -433,7 +433,7 @@ export function Dashboard({ initialUsers, listError }: Props) {
                 ) : null}
               </div>
               {latest.ecifId ? (
-                <CredentialRow label="ECIF ID (requested)" value={latest.ecifId} />
+                <CredentialRow label="ECIF ID" value={latest.ecifId} />
               ) : null}
             </div>
           ) : (

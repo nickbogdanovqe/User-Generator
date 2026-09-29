@@ -96,6 +96,15 @@ export type DigitalBankingUsersApi = {
   ) => Promise<{ guid: string; status: string }>;
   getUser: (guid: string) => Promise<DigitalBankingUserProfile>;
   recoverUser: (guid: string) => Promise<{ status: string; guid?: string }>;
+  /**
+   * Binds the party id. Create accepts only `interpose`; ECIF is a follow-up
+   * update that must be sent as `ecifId`. GET canonicalizes that back to `ecif`,
+   * which is the party id the login journey reads.
+   */
+  bindEcifId: (
+    userId: string,
+    ids: { interposeId: string; ecifId: string },
+  ) => Promise<void>;
   patchUserFlags: (
     userId: string,
     flags: DigitalBankingUserFlags,
@@ -252,6 +261,28 @@ export function createDigitalBankingUsersApi(
         { method: "PUT" },
       );
       return UserOperationResponseSchema.parse(await readJson(response)).result;
+    },
+
+    async bindEcifId(userId, ids) {
+      await request(
+        `/v2/users/digital-banking/${encodeURIComponent(userId)}`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            userStatus: {
+              termsAndConditionsVerificationFlag: true,
+              enrollmentFlag: true,
+            },
+            profile: {
+              fhnIds: [
+                { fhnIdType: "interpose", fhnIdValue: ids.interposeId },
+                { fhnIdType: "ecifId", fhnIdValue: ids.ecifId },
+              ],
+            },
+          }),
+        },
+      );
     },
 
     async patchUserFlags(userId, flags) {

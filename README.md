@@ -88,21 +88,21 @@ Never prefix these with `NEXT_PUBLIC_`.
 | --- | --- |
 | Username | Random `mobileaurora_<16 digits>` (13-digit epoch timestamp ms + 3 random digits), or an optional custom login (3–64 letters, digits, `.`, `_`, `-`) |
 | Password | `Bank1234567!` |
-| ECIF ID | Optional override; default `102175008` (often **not** persisted by Digital Banking — only interpose is) |
+| ECIF ID | Optional override; default `102175008`. Create stores interpose only; the generator then updates the user with `ecifId`, which GET returns as `ecif` |
 | Interpose ID | Optional override; default `00004451009944740791` (**required** for login customer lookup) |
 
 Create now verifies after provision that:
 
-- Digital Banking has a usable `interpose` fhnId (not missing / not `"undefined"`)
+- Digital Banking has a usable `interpose` fhnId and an `ecif` fhnId equal to the requested party id (not missing / not `"undefined"`)
 - Aurora flags are `auroraUser=true`, `migrationEligible=true`, `migrationStatus=COMPLETE`
 - Transmit user exists (and username resolves on `dev`)
 
 ### Login troubleshooting
 
-Mobile copy **“Something went wrong / We encountered an issue processing your request”** is the Transmit login form’s catch-all for unmapped journey errors (often interpose/customer lookup such as `FH_0000034`).
+Mobile copy **“Something went wrong / We encountered an issue processing your request”** is the Transmit login form’s catch-all for unmapped journey errors. A stored ECIF value of `"undefined"` fails party lookup as `FH_0000048`.
 
-- Leave ECIF/Interpose empty unless you have a known-good customer interpose; bad overrides break login.
-- Prefer the seed interpose above; Digital Banking create keeps **only** the interpose fhnId (ECIF is dropped by the API).
+- Leave ECIF/Interpose empty unless you have a known-good customer; bad overrides break login.
+- The seed pair above is one real customer. Create stores the interpose id, then a follow-up update stores the ECIF party id.
 - Maestro `create:fresh-aurora-user` and this app’s flags-only path produce the same migration flags when compared side-by-side.
 - Password auth for freshly provisioned users can succeed while a later journey policy step still rejects the session — that surfaces as Request Denied / rejection, not this app’s create failure.
 

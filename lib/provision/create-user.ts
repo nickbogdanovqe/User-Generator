@@ -20,13 +20,18 @@ function flagIsTrue(value: string | boolean | undefined): boolean {
   return value === true || value === "true";
 }
 
+function fhnValue(
+  profile: DigitalBankingUserProfile,
+  fhnIdType: string,
+): string | undefined {
+  return profile.fhnIds?.find((id) => id.fhnIdType === fhnIdType)?.fhnIdValue;
+}
+
 function assertProvisionedProfile(
   profile: DigitalBankingUserProfile,
-  expectedInterpose: string,
+  expected: { interpose: string; ecifId: string },
 ): void {
-  const interpose = profile.fhnIds?.find(
-    (id) => id.fhnIdType === "interpose",
-  )?.fhnIdValue;
+  const interpose = fhnValue(profile, "interpose");
 
   if (!interpose || interpose === "undefined") {
     throw new Error(
@@ -35,9 +40,20 @@ function assertProvisionedProfile(
     );
   }
 
-  if (interpose !== expectedInterpose) {
+  if (interpose !== expected.interpose) {
     throw new Error(
-      `Digital Banking persisted interpose "${interpose}" but expected "${expectedInterpose}"`,
+      `Digital Banking persisted interpose "${interpose}" but expected "${expected.interpose}"`,
+    );
+  }
+
+  // Login uses the `ecif` entry as the party id whenever it is present, including
+  // the literal "undefined" create used to persist. GET canonicalizes the
+  // write-only `ecifId` update back to `ecif`.
+  const ecif = fhnValue(profile, "ecif");
+  if (!ecif || ecif === "undefined" || ecif !== expected.ecifId) {
+    throw new Error(
+      `Digital Banking persisted ecif "${ecif ?? ""}" but expected "${expected.ecifId}". ` +
+        "Login uses this value as the party id.",
     );
   }
 
@@ -100,10 +116,7 @@ export async function createFreshAuroraUser(
       email: draft.email,
       password: draft.password,
       phoneNumbers: [draft.primaryPhoneNumber],
-      fhnIds: [
-        { fhnIdType: "ecif", fhnIdValue: draft.ecifId },
-        { fhnIdType: "interpose", fhnIdValue: draft.interpose },
-      ],
+      fhnIds: [{ fhnIdType: "interpose", fhnIdValue: draft.interpose }],
     });
     externalUserId = created.guid;
 
@@ -119,10 +132,17 @@ export async function createFreshAuroraUser(
     });
 
     await digitalBanking.recoverUser(externalUserId);
+    await digitalBanking.bindEcifId(externalUserId, {
+      interposeId: draft.interpose,
+      ecifId: draft.ecifId,
+    });
     await markUserAuroraMigrationComplete(digitalBanking, externalUserId);
 
     const profile = await digitalBanking.getUser(externalUserId);
-    assertProvisionedProfile(profile, draft.interpose);
+    assertProvisionedProfile(profile, {
+      interpose: draft.interpose,
+      ecifId: draft.ecifId,
+    });
     await assertTransmitLoginReady(transmit, {
       username: draft.username,
       externalUserId,
