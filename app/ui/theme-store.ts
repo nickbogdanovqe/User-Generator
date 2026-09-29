@@ -1,6 +1,6 @@
 "use client";
 
-import { useSyncExternalStore } from "react";
+import { useEffect, useSyncExternalStore } from "react";
 import {
   DEFAULT_THEME_PREFERENCE,
   THEME_STORAGE_KEY,
@@ -25,10 +25,18 @@ export function resolveTheme(preference: ThemePreference): ResolvedTheme {
   return preference;
 }
 
+function readAppliedTheme(): string | null {
+  return document.documentElement.getAttribute("data-theme");
+}
+
 function applyResolvedTheme(resolved: ResolvedTheme): void {
   const root = document.documentElement;
-  root.setAttribute("data-theme", resolved);
-  root.style.colorScheme = resolved;
+  if (root.getAttribute("data-theme") !== resolved) {
+    root.setAttribute("data-theme", resolved);
+  }
+  if (root.style.colorScheme !== resolved) {
+    root.style.colorScheme = resolved;
+  }
 }
 
 /* ------------------------------------------------------------------ */
@@ -62,13 +70,21 @@ function startTransition(): void {
 }
 
 export function setThemePreference(next: ThemePreference): void {
-  if (next === getPreference()) return;
+  const changed = next !== getPreference();
+  const domOutOfSync = readAppliedTheme() !== resolveTheme(next);
+  // Always re-apply to the DOM: if something (a client re-render of the root,
+  // an extension, a skipped bootstrap) reset the attribute, re-selecting the
+  // already-active option must still bring the page back in line.
+  if (!changed && !domOutOfSync) return;
+
   preference = next;
-  try {
-    window.localStorage.setItem(THEME_STORAGE_KEY, next);
-  } catch {
-    // Storage may be unavailable (private mode, disabled); the in-memory
-    // preference still drives this session.
+  if (changed) {
+    try {
+      window.localStorage.setItem(THEME_STORAGE_KEY, next);
+    } catch {
+      // Storage may be unavailable (private mode, disabled); the in-memory
+      // preference still drives this session.
+    }
   }
   startTransition();
   sync();
@@ -103,5 +119,13 @@ export function useThemePreference(): {
   setPreference: (next: ThemePreference) => void;
 } {
   const current = useSyncExternalStore(subscribe, getPreference, getServerSnapshot);
+
+  // Keep the document attribute aligned with whatever the selector displays.
+  // Runs after hydration (server snapshot -> stored preference) and after
+  // every preference change, so the two can never drift apart.
+  useEffect(() => {
+    applyResolvedTheme(resolveTheme(current));
+  }, [current]);
+
   return { preference: current, setPreference: setThemePreference };
 }

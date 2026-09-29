@@ -33,12 +33,17 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      data-theme="dark"
       suppressHydrationWarning
       className={`${spaceGrotesk.variable} ${syne.variable} ${plexMono.variable} h-full antialiased`}
     >
       <head>
-        {/* Applies the persisted light or dark theme before first paint. */}
+        {/*
+          Stamps <html data-theme> from the persisted preference before first
+          paint. The attribute is deliberately not rendered by React (`:root`
+          already carries the dark tokens) so a client re-render of the root can
+          never overwrite the user's choice; app/ui/theme-store.ts reconciles it
+          after hydration as a further safeguard.
+        */}
         <script dangerouslySetInnerHTML={{ __html: THEME_BOOTSTRAP_SCRIPT }} />
       </head>
       <body className="min-h-full flex flex-col">{children}</body>
