@@ -12,22 +12,39 @@ All Digital Banking and Transmit secrets stay **server-side**. The browser only 
 
 - App-password gate with signed httpOnly session cookie (12h)
 - Light / dark theme (Appearance switcher in the sidebar and on the login page; persisted in local storage, applied before first paint so there is no flash)
-- Console UI with a left sidebar: navigation (Fresh users / External users) plus a global `dev` / `tst` environment switcher shared across every page (persisted in local storage; governs provisioning and the registry view). Provisioning writes a Digital Banking user. Login creates the Transmit user. Transmit admin credentials are optional and only used to delete that user later; an env without them shows **Provision only**.
+- Console UI with a left sidebar: navigation (Fresh users / External users / User state) plus a global `dev` / `tst` environment switcher shared across every page (persisted in local storage; governs provisioning, the registry view, and user-state actions). Provisioning writes a Digital Banking user. Login creates the Transmit user. Transmit admin credentials are optional and only used to delete that user later; an env without them shows **Provision only**.
 - External users reference catalog with Retail / SMB / Comingled tabs, KPI summary cards, search, pod filter, and one-click copy
 - Optional username override (empty → random `mobileaurora_*`); optional ECIF ID / Interpose ID overrides (empty → seed defaults used by Maestro)
 - Persist created users in **private** Vercel Blob (`users/{env}/{username}.json`)
 - Delete users (best-effort Transmit remove-from-app when admin creds exist, plus Digital Banking delete and Blob cleanup)
 - Aurora migration via Digital Banking user-flags (same path Maestro uses when SSO admin is unreachable — required on Vercel)
+- **User state** page: look up any existing login and recover, lock, or convert it among Aurora and D3 migration states. These calls are not stored in Blob
 
 ### How `dev` vs `tst` works
 
 - **Digital Banking** credentials stay shared (`client_id`, `client_secret`, `x_api_key`).
 - **Provisioning** is identical for `dev` and `tst`: both write to the same Digital Banking API (`qa-api`). The DEV variables are enough to create users in either env.
+- **User state** (lookup, recover, lock, and migration conversion) uses that same shared Digital Banking API. The sidebar environment is recorded on the result. Transmit admin credentials are not required.
 - **Transmit admin** credentials are optional, per env, and used only when deleting a user login has already created. DEV and TST are different Transmit tenants on the same host (`https://api.transmitsecurity.io`, the default base URL for both):
   - `dev` → `TRANSMIT_CLIENT_ID_DEV` / `TRANSMIT_CLIENT_SECRET_DEV`
   - `tst` → `TRANSMIT_CLIENT_ID_TST` / `TRANSMIT_CLIENT_SECRET_TST`
 - An env with those vars missing is marked **Provision only** in the switcher. Delete skips Transmit cleanup and reports a warning.
 - Created users are stored under `users/{dev|tst}/`. Login authenticates the Digital Banking password and creates the Transmit app user.
+
+### User state
+
+Open **User state**, type a login, and look it up. The page shows the Digital Banking guid and migration flags. Actions:
+
+| Action | Effect |
+| --- | --- |
+| Recover / unblock | `PUT .../recovery` — clears a Digital Banking lockout |
+| Lock | `PUT .../lockout` |
+| Convert to Aurora | `auroraUser=true`, eligible, mandatory, `migrationStatus=COMPLETE` |
+| Convert to D3 eligible | not Aurora, eligible, not mandatory, `migrationStatus=RESET` |
+| Convert to D3 ineligible | not Aurora, not eligible, not mandatory, `migrationStatus=RESET` |
+| Convert to D3 eligible, migration failed | not Aurora, eligible, `migrationStatus=FAILED` |
+
+Flag changes are one user-flags `PATCH` per field, the same Vercel-safe path create uses. SSO admin is not called. Lock and recover show the Digital Banking operation status, because the profile payload has no lock flag.
 
 ## Local development
 

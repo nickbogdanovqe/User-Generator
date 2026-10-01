@@ -14,8 +14,15 @@ import { deleteFreshAuroraUser } from "@/lib/provision/delete-user";
 import {
   normalizeOptionalFhnId,
   normalizeOptionalUsername,
+  normalizeRequiredUsername,
 } from "@/lib/provision/draft";
 import { isTestEnv, type StoredUser } from "@/lib/provision/types";
+import {
+  applyUserOperation,
+  isUserStateOperation,
+  lookupUserState,
+  type UserStateSnapshot,
+} from "@/lib/provision/user-state";
 
 export type ActionResult<T> =
   | { ok: true; data: T }
@@ -146,6 +153,52 @@ export async function deleteUserAction(
         error instanceof Error
           ? sanitizeError(error.message)
           : "Failed to delete user",
+    };
+  }
+}
+
+export type UserStateInput = {
+  testEnv: string;
+  username: string;
+  operation: string;
+};
+
+export async function userStateAction(
+  input: UserStateInput,
+): Promise<ActionResult<UserStateSnapshot>> {
+  try {
+    await assertSameOrigin();
+    await requireAuth();
+    if (!isTestEnv(input.testEnv)) {
+      return { ok: false, error: 'Environment must be "dev" or "tst"' };
+    }
+    if (!isUserStateOperation(input.operation)) {
+      return { ok: false, error: "Unknown user state operation" };
+    }
+
+    let username: string;
+    try {
+      username = normalizeRequiredUsername(input.username);
+    } catch (error) {
+      return {
+        ok: false,
+        error: error instanceof Error ? error.message : "Invalid username",
+      };
+    }
+
+    const snapshot =
+      input.operation === "lookup"
+        ? await lookupUserState(input.testEnv, username)
+        : await applyUserOperation(input.testEnv, username, input.operation);
+
+    return { ok: true, data: snapshot };
+  } catch (error) {
+    return {
+      ok: false,
+      error:
+        error instanceof Error
+          ? sanitizeError(error.message)
+          : "Failed to update user state",
     };
   }
 }

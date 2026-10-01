@@ -44,6 +44,15 @@ export function normalizeOptionalUsername(
   return trimmed;
 }
 
+/** Required login for lookup, recover, lock, and migration conversion. */
+export function normalizeRequiredUsername(value: string | undefined): string {
+  const username = normalizeOptionalUsername(value);
+  if (!username) {
+    throw new Error("Username is required");
+  }
+  return username;
+}
+
 function buildUniquePhoneNumber(uniqueId: string): string {
   const areaCodes = ["202", "212", "213", "305", "312", "404", "415", "646"];
   let hash = 0;

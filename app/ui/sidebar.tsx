@@ -8,6 +8,7 @@ import { useTestEnv } from "@/app/ui/env-context";
 import {
   CloseIcon,
   LibraryIcon,
+  LockIcon,
   LogoutIcon,
   MenuIcon,
   ShieldIcon,
@@ -28,6 +29,12 @@ const NAV = [
     label: "External users",
     hint: "Reference catalog",
     Icon: LibraryIcon,
+  },
+  {
+    href: "/user-state",
+    label: "User state",
+    hint: "Recover, lock, convert",
+    Icon: LockIcon,
   },
 ] as const;
 
@@ -110,7 +117,7 @@ export function EnvSwitcher({ compact = false }: { compact?: boolean }) {
           {activeReady
             ? ` · ${active.readyHint}.`
             : " · Transmit cleanup credentials are not set. Provisioning still works."}{" "}
-          Governs provisioning and the registry.
+          Governs provisioning, the registry, and user state.
         </p>
       ) : null}
     </div>

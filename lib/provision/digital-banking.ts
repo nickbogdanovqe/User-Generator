@@ -38,6 +38,19 @@ const UserOperationResponseSchema = z.object({
   }),
 });
 
+const SearchUsersResponseSchema = z.object({
+  results: z.array(
+    z.object({
+      id: z.string(),
+      profile: z
+        .object({
+          login: z.string().optional(),
+        })
+        .optional(),
+    }),
+  ),
+});
+
 function requireEnv(env: Env, key: string): string {
   const value = env[key];
   if (!value) {
@@ -94,7 +107,9 @@ export type DigitalBankingUsersApi = {
   createUser: (
     user: CreateDigitalBankingUserInput,
   ) => Promise<{ guid: string; status: string }>;
+  findUserGuidByLogin: (login: string) => Promise<string>;
   getUser: (guid: string) => Promise<DigitalBankingUserProfile>;
+  lockUser: (guid: string) => Promise<{ status: string; guid?: string }>;
   recoverUser: (guid: string) => Promise<{ status: string; guid?: string }>;
   /**
    * Binds the party id. Create accepts only `interpose`; ECIF is a follow-up
@@ -220,6 +235,23 @@ export function createDigitalBankingUsersApi(
       return CreateUserResponseSchema.parse(await readJson(response)).result;
     },
 
+    async findUserGuidByLogin(login) {
+      const response = await request("/v2/users/digital-banking", {
+        method: "GET",
+        headers: { "x-login": login },
+      });
+      const parsed = SearchUsersResponseSchema.parse(await readJson(response));
+      const exactMatch =
+        parsed.results.find((result) => result.profile?.login === login) ??
+        parsed.results[0];
+
+      if (!exactMatch) {
+        throw new Error(`Digital Banking user "${login}" was not found`);
+      }
+
+      return exactMatch.id;
+    },
+
     async getUser(guid) {
       const response = await request(
         `/v2/users/digital-banking/${encodeURIComponent(guid)}`,
@@ -253,6 +285,14 @@ export function createDigitalBankingUsersApi(
               : undefined,
         },
       };
+    },
+
+    async lockUser(guid) {
+      const response = await request(
+        `/v2/users/digital-banking/${encodeURIComponent(guid)}/lockout`,
+        { method: "PUT" },
+      );
+      return UserOperationResponseSchema.parse(await readJson(response)).result;
     },
 
     async recoverUser(guid) {
